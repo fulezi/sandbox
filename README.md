@@ -1,2 +1,2 @@
 # sandbox
-Sandob and test with OpenSceneGraph
+Sandox and play-test with OpenSceneGraph
