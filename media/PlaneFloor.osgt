@@ -1,0 +1,227 @@
+#Ascii Scene 
+#Version 100 
+#Generator OpenSceneGraph 3.2.3 
+
+osg::Group {
+  UniqueID 1 
+  Name "Root" 
+  UserDataContainer TRUE {
+    osg::DefaultUserDataContainer {
+      UniqueID 2 
+      UDC_UserObjects 1 {
+        osg::StringValueObject {
+          UniqueID 3 
+          Name "source" 
+          Value "blender" 
+        }
+      }
+    }
+  }
+  Children 1 {
+    osg::MatrixTransform {
+      UniqueID 4 
+      Name "Plane" 
+      Children 1 {
+        osg::Geode {
+          UniqueID 5 
+          Name "GeodePlane" 
+          Drawables 1 {
+            osg::Geometry {
+              UniqueID 6 
+              Name "Plane_0" 
+              DataVariance STATIC 
+              StateSet TRUE {
+                osg::StateSet {
+                  UniqueID 7 
+                  Name "Material.001" 
+                  DataVariance STATIC 
+                  UserDataContainer TRUE {
+                    osg::DefaultUserDataContainer {
+                      UniqueID 8 
+                      UDC_UserObjects 5 {
+                        osg::StringValueObject {
+                          UniqueID 9 
+                          Name "source" 
+                          Value "blender" 
+                        }
+                        osg::StringValueObject {
+                          UniqueID 10 
+                          Name "00_UsePremultiplyAlpha" 
+                          Value "false" 
+                        }
+                        osg::StringValueObject {
+                          UniqueID 11 
+                          Name "00_UseAlpha" 
+                          Value "true" 
+                        }
+                        osg::StringValueObject {
+                          UniqueID 12 
+                          Name "00_DiffuseColor" 
+                          Value "1.0" 
+                        }
+                        osg::StringValueObject {
+                          UniqueID 13 
+                          Name "00_BlendType" 
+                          Value "MIX" 
+                        }
+                      }
+                    }
+                  }
+                  ModeList 1 {
+                    GL_LIGHTING OFF 
+                  }
+                  AttributeList 1 {
+                    osg::Material {
+                      UniqueID 14 
+                      Name "Material.001" 
+                      DataVariance STATIC 
+                      UserDataContainer TRUE {
+                        osg::DefaultUserDataContainer {
+                          UniqueID 15 
+                          UDC_UserObjects 10 {
+                            osg::StringValueObject {
+                              UniqueID 16 
+                              Name "source" 
+                              Value "blender" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 17 
+                              Name "DiffuseIntensity" 
+                              Value "0.800000011920929" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 18 
+                              Name "DiffuseColor" 
+                              Value "[0.800000011920929, 0.800000011920929, 0.800000011920929]" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 19 
+                              Name "SpecularIntensity" 
+                              Value "0.5" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 20 
+                              Name "SpecularColor" 
+                              Value "[1.0, 1.0, 1.0]" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 21 
+                              Name "SpecularHardness" 
+                              Value "50" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 22 
+                              Name "Shadeless" 
+                              Value "true" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 23 
+                              Name "Translucency" 
+                              Value "0.0" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 24 
+                              Name "DiffuseShader" 
+                              Value "LAMBERT" 
+                            }
+                            osg::StringValueObject {
+                              UniqueID 25 
+                              Name "SpecularShader" 
+                              Value "COOKTORR" 
+                            }
+                          }
+                        }
+                      }
+                      Ambient TRUE Front 0 0 0 1 Back 0 0 0 1 
+                      Diffuse TRUE Front 0.64 0.64 0.64 1 Back 0.64 0.64 0.64 1 
+                      Specular TRUE Front 0.5 0.5 0.5 1 Back 0.5 0.5 0.5 1 
+                      Emission TRUE Front 0 0 0 1 Back 0 0 0 1 
+                      Shininess TRUE Front 12.5 Back 12.5 
+                    }
+                    Value OFF 
+                  }
+                  TextureModeList 1 {
+                    Data 1 {
+                      GL_TEXTURE_2D ON 
+                    }
+                  }
+                  TextureAttributeList 1 {
+                    Data 1 {
+                      osg::Texture2D {
+                        UniqueID 26 
+                        Name "Texture" 
+                        WRAP_S REPEAT 
+                        WRAP_T REPEAT 
+                        WRAP_R REPEAT 
+                        MIN_FILTER LINEAR_MIPMAP_LINEAR 
+                        MAG_FILTER LINEAR 
+                        UnRefImageDataAfterApply TRUE 
+                        Swizzle RGBA 
+                        Image TRUE {
+                          ClassName osg::Image 
+                          UniqueID 27 
+                          FileName "textures/checkboard.png" 
+                          WriteHint 0 2 
+                          DataVariance STATIC 
+                        }
+                      }
+                      Value OFF 
+                    }
+                  }
+                }
+              }
+              PrimitiveSetList 1 {
+                DrawElementsUByte GL_QUADS 0 4 {
+                  0 1 2 3 
+                }
+                
+              }
+              VertexData {
+                Array TRUE ArrayID 1 Vec3fArray 4 {
+                  -1 -1 0 
+                  1 -1 0 
+                  1 1 0 
+                  -1 1 0 
+                }
+                Indices FALSE 
+                Binding BIND_PER_VERTEX 
+                Normalize 0 
+              }
+              NormalData {
+                Array TRUE ArrayID 2 Vec3fArray 4 {
+                  0 0 50 
+                  0 0 50 
+                  0 0 50 
+                  0 0 50 
+                }
+                Indices FALSE 
+                Binding BIND_PER_VERTEX 
+                Normalize 0 
+              }
+              TexCoordData 1 {
+                Data {
+                  Array TRUE ArrayID 3 Vec2fArray 4 {
+                    -9.53745 10.5374 
+                    -9.53745 -9.53745 
+                    10.5374 -9.53745 
+                    10.5374 10.5374 
+                  }
+                  Indices FALSE 
+                  Binding BIND_PER_VERTEX 
+                  Normalize 0 
+                }
+              }
+            }
+          }
+        }
+      }
+      Matrix {
+        50 0 0 0 
+        0 50 0 0 
+        0 0 50 0 
+        0 0 0 1 
+      }
+      
+    }
+  }
+}
