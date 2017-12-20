@@ -125,10 +125,10 @@ FollowNodeCamera::updateKeyboard(const osgGA::GUIEventAdapter& event,
 
   const float movement = (event.getEventType() == TYPE::KEYDOWN) ? 1.0f : 0.0f;
   switch (event.getKey()) {
-    case KEY::KEY_A: PlayerInputs.dpad.x() = movement; break;
-    case KEY::KEY_D: PlayerInputs.dpad.x() = -movement; break;
-    case KEY::KEY_W: PlayerInputs.dpad.y() = -movement; break;
-    case KEY::KEY_S: PlayerInputs.dpad.y() = movement; break;
+    case KEY::KEY_A: PlayerInputs.dpad.x() = -movement; break;
+    case KEY::KEY_D: PlayerInputs.dpad.x() = movement; break;
+    case KEY::KEY_W: PlayerInputs.dpad.y() = movement; break;
+    case KEY::KEY_S: PlayerInputs.dpad.y() = -movement; break;
     case KEY::KEY_Space:
       PlayerInputs.jump =
         (event.getEventType() == TYPE::KEYDOWN) ? true : false;
@@ -172,7 +172,7 @@ void
 UpdateGamePlay::operator()(osg::Node* node, osg::NodeVisitor* nv)
 {
   const double newTime = nv->getFrameStamp()->getReferenceTime();
-  const double delta   = lastUpdate - nv->getFrameStamp()->getReferenceTime();
+  const double delta   = nv->getFrameStamp()->getReferenceTime() - lastUpdate;
 
   updateGameplay(delta, PlayerInputs);
 
