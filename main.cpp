@@ -59,6 +59,21 @@ Inputs PlayerInputs;
 
 /* --- Singletons --- */
 
+/* --- Utils ---*/
+template <typename T>
+int
+Sign(T val)
+{
+  return (T(0) < val) - (val < T(0));
+}
+template <typename T, typename U>
+T
+mix(T x, T y, U a)
+{
+  return x * (1.0 - a) + y * a;
+}
+/* --- Utils ---*/
+
 /* --- FollowNodeCamera --- */
 class FollowNodeCamera : public osgGA::CameraManipulator
 {
@@ -70,7 +85,6 @@ public:
   osg::Matrixd getInverseMatrix() const override;
   bool handle(const osgGA::GUIEventAdapter& event,
               osgGA::GUIActionAdapter&      action) override;
-
 public:
   void setByMatrix(const osg::Matrixd& matrix) override;
   void setByInverseMatrix(const osg::Matrixd& matrix) override;
@@ -82,20 +96,26 @@ protected:
 protected:
   osg::Transform* target;
   osg::Vec3       offset;
+  float           smoothSpeed;
+
+  osg::Vec3   currentPosition;
+  osg::Vec3   currentCenter;
+  osg::Matrix viewMatrix;
 };
 
 FollowNodeCamera::FollowNodeCamera(osg::Transform* target, osg::Vec3 offset)
   : target(target)
   , offset(offset)
+  , smoothSpeed(0.1f)
+  , currentPosition(target->getBound().center() + offset)
+  , currentCenter(target->getBound().center())
 {
 }
 
 osg::Matrixd
 FollowNodeCamera::getMatrix() const
 {
-  const osg::Vec3& targetCenter = target->getBound().center();
-  return osg::Matrix::inverse(osg::Matrix::lookAt(
-    targetCenter + offset, targetCenter, osg::Vec3(0, 0, 1)));
+  return viewMatrix;
 }
 
 osg::Matrixd
@@ -142,6 +162,24 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
 {
   using TYPE = osgGA::GUIEventAdapter::EventType;
 
+// -----------------------
+// Update view matrix ----
+#if 1
+  const osg::Vec3& targetCenter     = target->getBound().center();
+  currentCenter = targetCenter;
+#else
+  const osg::Vec3& targetCenter = target->getBound().center();
+  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
+#endif
+  const osg::Vec3 finalTranslation = targetCenter + offset;
+  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
+
+  // TODO: delta
+  viewMatrix = osg::Matrix::inverse(
+    osg::Matrix::lookAt(currentPosition, currentCenter, osg::Vec3(0, 0, 1)));
+
+  // ------------------
+  // Update inputs ----
   switch (event.getEventType()) {
     case TYPE::KEYDOWN:
       updateKeyboard(event, action);
@@ -197,7 +235,7 @@ main(int /*argc*/, char* const /*argv*/[])
   // source->getLight()->setDirection(osg::Vec3(0.0f, 0.0f, 0.0f));
   source->getLight()->setPosition(osg::Vec4(-1.0, -1.0, 1.0, 0.0));
   source->getLight()->setAmbient(osg::Vec4(0.2, 0.2, 0.2, 1.0));
-  source->getLight()->setDiffuse(osg::Vec4(0.8, 0.8, 0.8, 1.0));
+  source->getLight()->setDiffuse(osg::Vec4(0.5, 0.5, 0.5, 1.0));
   source->getLight()->setLightNum(0);
   source->setName("SUN");
   source->setCullingActive(false);
