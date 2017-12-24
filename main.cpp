@@ -281,8 +281,7 @@ main(int /*argc*/, char* const /*argv*/[])
     osgDB::readNodeFile("../media/CubePlayer.osgt");
   osg::ref_ptr<osg::MatrixTransform> player = new osg::MatrixTransform;
   player->addChild(playerNode);
-  player->setNodeMask(rcvShadowMask | castShadowMask); // rcvShadowMask |
-  //root->addChild(player);
+  player->setNodeMask(rcvShadowMask | castShadowMask);
   shadowroot->addChild(player);
   osg::ref_ptr<FollowNodeCamera> cameraman =
     new FollowNodeCamera(player, osg::Vec3(0, -35, 15));
@@ -299,7 +298,6 @@ main(int /*argc*/, char* const /*argv*/[])
   ribbons->getOrCreateStateSet()->setRenderingHint(
     osg::StateSet::TRANSPARENT_BIN);
   root->addChild(ribbons);
-  // root->setNodeMask(rcvShadowMask);
   // // TODO: on this node?
   player->addUpdateCallback(new Soleil::RibbonCallback(ribbon));
 
@@ -309,19 +307,9 @@ main(int /*argc*/, char* const /*argv*/[])
   viewer.setLightingMode(osg::View::NO_LIGHT);
   viewer.setCameraManipulator(cameraman);
 
-#if 0
-  root->setNodeMask(rcvShadowMask | ~castShadowMask);
-  // root->setNodeMask(~rcvShadowMask);
-  //ribbons->setNodeMask(0xffffffff |  ~rcvShadowMask);
-  //ribbon->setNodeMask(ribbon->getNodeMask() & ~rcvShadowMask);
-  //ribbons->setNodeMask(ribbons->getNodeMask() & ~rcvShadowMask);
-  shadowroot->addChild(root);
-  viewer.setSceneData(shadowroot);
-#else
-  // root->setNodeMask(rcvShadowMask);
+  // ribbon->setNodeMask(ribbon->getNodeMask() & ~rcvShadowMask);
   root->addChild(shadowroot);
   viewer.setSceneData(root);
-#endif
 
   initGame(player);
 
