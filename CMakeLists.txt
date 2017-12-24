@@ -21,6 +21,7 @@ add_executable(zinc-osg
   SkyBox.cpp
   Logger.cpp
 
+  Ribbon.cpp
   gameplay.cpp)
 
 

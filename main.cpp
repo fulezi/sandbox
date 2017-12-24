@@ -46,6 +46,7 @@
 #include <osg/Timer>
 
 #include "Logger.h"
+#include "Ribbon.h"
 #include "SkyBox.h"
 #include "Utils.h"
 #include "easing.h"
@@ -85,6 +86,7 @@ public:
   osg::Matrixd getInverseMatrix() const override;
   bool handle(const osgGA::GUIEventAdapter& event,
               osgGA::GUIActionAdapter&      action) override;
+
 public:
   void setByMatrix(const osg::Matrixd& matrix) override;
   void setByInverseMatrix(const osg::Matrixd& matrix) override;
@@ -138,7 +140,7 @@ FollowNodeCamera::setByInverseMatrix(const osg::Matrixd& /*matrix*/)
 
 void
 FollowNodeCamera::updateKeyboard(const osgGA::GUIEventAdapter& event,
-                                 osgGA::GUIActionAdapter&      action)
+                                 osgGA::GUIActionAdapter& /*action*/)
 {
   using KEY  = osgGA::GUIEventAdapter::KeySymbol;
   using TYPE = osgGA::GUIEventAdapter::EventType;
@@ -164,9 +166,9 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
 
 // -----------------------
 // Update view matrix ----
-#if 1
-  const osg::Vec3& targetCenter     = target->getBound().center();
-  currentCenter = targetCenter;
+#if 0
+  const osg::Vec3& targetCenter = target->getBound().center();
+  currentCenter                 = targetCenter;
 #else
   const osg::Vec3& targetCenter = target->getBound().center();
   currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
@@ -207,7 +209,7 @@ private:
 };
 
 void
-UpdateGamePlay::operator()(osg::Node* node, osg::NodeVisitor* nv)
+UpdateGamePlay::operator()(osg::Node* /*node*/, osg::NodeVisitor* nv)
 {
   const double newTime = nv->getFrameStamp()->getReferenceTime();
   const double delta   = nv->getFrameStamp()->getReferenceTime() - lastUpdate;
@@ -240,7 +242,7 @@ main(int /*argc*/, char* const /*argv*/[])
   source->setName("SUN");
   source->setCullingActive(false);
   //
-  // osg::ref_ptr<osgShadow::ShadowMap> sm = new osgShadow::ShadowMap;
+  osg::ref_ptr<osgShadow::ShadowMap> sm = new osgShadow::ShadowMap;
   // sm->setAmbientBias(osg::Vec2(0.9f, 0.9f));
   // sm->setPolygonOffset(osg::Vec2(.20f, .20f));
   // sm->setLight(source);
@@ -249,10 +251,10 @@ main(int /*argc*/, char* const /*argv*/[])
   //   osg::ref_ptr<osgShadow::SoftShadowMap> sm =
   //     new osgShadow::SoftShadowMap;
   // sm->setSoftnessWidth(.00000001f);
-  osg::ref_ptr<osgShadow::ViewDependentShadowMap> sm =
-    new osgShadow::ViewDependentShadowMap;
-  // osg::ref_ptr<osgShadow::LightSpacePerspectiveShadowMapCB> sm =
-  //   new osgShadow::LightSpacePerspectiveShadowMapCB;
+  // osg::ref_ptr<osgShadow::ViewDependentShadowMap> sm =
+  //   new osgShadow::ViewDependentShadowMap;
+  // osg::ref_ptr<osgShadow::LightSpacePerspectiveShadowMapVB> sm =
+  //   new osgShadow::LightSpacePerspectiveShadowMapVB;
   //
   osg::ref_ptr<osgShadow::ShadowedScene> shadowroot =
     new osgShadow::ShadowedScene;
@@ -274,25 +276,52 @@ main(int /*argc*/, char* const /*argv*/[])
   floor->setNodeMask(rcvShadowMask);
   shadowroot->addChild(floor);
   root->addChild(skybox);
-  // root->addChild(shadowroot);
-  shadowroot->addChild(root);
 
   osg::ref_ptr<osg::Node> playerNode =
     osgDB::readNodeFile("../media/CubePlayer.osgt");
   osg::ref_ptr<osg::MatrixTransform> player = new osg::MatrixTransform;
   player->addChild(playerNode);
   player->setNodeMask(rcvShadowMask | castShadowMask); // rcvShadowMask |
-  root->addChild(player);
+  //root->addChild(player);
+  shadowroot->addChild(player);
   osg::ref_ptr<FollowNodeCamera> cameraman =
     new FollowNodeCamera(player, osg::Vec3(0, -35, 15));
   root->addEventCallback(new UpdateGamePlay());
+
+  // Ribbon:
+  osg::ref_ptr<Soleil::Ribbon> ribbon =
+    new Soleil::Ribbon(100, 2.0f, osg::Vec3(1.0f, 0.0f, 1.0f));
+  osg::ref_ptr<osg::Geode> ribbons = new osg::Geode;
+  ribbons->addDrawable(ribbon);
+  ribbons->getOrCreateStateSet()->setMode(GL_LIGHTING,
+                                          osg::StateAttribute::OFF);
+  ribbons->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  ribbons->getOrCreateStateSet()->setRenderingHint(
+    osg::StateSet::TRANSPARENT_BIN);
+  root->addChild(ribbons);
+  // root->setNodeMask(rcvShadowMask);
+  // // TODO: on this node?
+  player->addUpdateCallback(new Soleil::RibbonCallback(ribbon));
 
   // root->addChild(sm->makeDebugHUD());
 
   osgViewer::Viewer viewer;
   viewer.setLightingMode(osg::View::NO_LIGHT);
   viewer.setCameraManipulator(cameraman);
+
+#if 0
+  root->setNodeMask(rcvShadowMask | ~castShadowMask);
+  // root->setNodeMask(~rcvShadowMask);
+  //ribbons->setNodeMask(0xffffffff |  ~rcvShadowMask);
+  //ribbon->setNodeMask(ribbon->getNodeMask() & ~rcvShadowMask);
+  //ribbons->setNodeMask(ribbons->getNodeMask() & ~rcvShadowMask);
+  shadowroot->addChild(root);
   viewer.setSceneData(shadowroot);
+#else
+  // root->setNodeMask(rcvShadowMask);
+  root->addChild(shadowroot);
+  viewer.setSceneData(root);
+#endif
 
   initGame(player);
 
