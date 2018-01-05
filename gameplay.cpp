@@ -47,11 +47,17 @@ Movement::update(const float deltaTime)
                               std::pow(friction.z(), deltaTime));
   velocity = osg::componentMultiply(velocity, powFriction);
 
+  const osg::Vec3 previousTemp = point;
   point += velocity * deltaTime;
 
+  // TODO: restore point on collision
+  
   if (point.z() < 0.0f) {
     point.z() = 0.0f;
   }
+
+  
+  
   auto m = target->getMatrix();
   m.setTrans(point);
   target->setMatrix(m);

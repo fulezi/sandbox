@@ -73,6 +73,21 @@ mix(T x, T y, U a)
 {
   return x * (1.0 - a) + y * a;
 }
+template <typename T>
+T
+Random(T maxValue)
+{
+  return static_cast<T>(rand()) / (static_cast<T>(RAND_MAX / maxValue));
+}
+template <typename T>
+T
+Random(T minValue, T maxValue)
+{
+  //
+  return static_cast<T>(rand() + minValue) /
+         (static_cast<T>(RAND_MAX / maxValue));
+}
+
 /* --- Utils ---*/
 
 /* --- FollowNodeCamera --- */
@@ -302,6 +317,27 @@ main(int /*argc*/, char* const /*argv*/[])
   player->addUpdateCallback(new Soleil::RibbonCallback(ribbon));
 
   // root->addChild(sm->makeDebugHUD());
+
+  // Obstacle:
+  osg::ref_ptr<osg::Group> obstacles = new osg::Group;
+  for (int i = 0; i < 75; ++i) {
+    osg::ref_ptr<osg::MatrixTransform> t = new osg::MatrixTransform;
+    t->setMatrix(osg::Matrix::translate(
+      Random(-30.0f, 20.0f), Random(10.0f, 30.0f) * 2.0f * (float)i, 0.0f));
+    t->addChild(playerNode);
+    t->setNodeMask(rcvShadowMask | castShadowMask);
+
+    obstacles->addChild(t);
+  }
+  obstacles->setNodeMask(rcvShadowMask | castShadowMask);
+#if 0
+  // TODO: Shadow should be baked at this point. In addition, the sadow map is
+  // too small to include all the elements. It however render correctly with
+  // ViewDependentshadowmap
+  shadowroot->addChild(obstacles);
+#else
+  root->addChild(obstacles);
+#endif
 
   osgViewer::Viewer viewer;
   viewer.setLightingMode(osg::View::NO_LIGHT);

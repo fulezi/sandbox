@@ -61,9 +61,9 @@ namespace Soleil {
       (*normals)[i + 1]  = (*normals)[i + 3];
     }
     (*vertices)[numberOfPoints - 2] =
-      osg::Vec3(0.0f, -halfWidth, 1.0f) * modelMatrix;
+      osg::Vec3( -halfWidth,0.0f, 1.0f) * modelMatrix;
     (*vertices)[numberOfPoints - 1] =
-      osg::Vec3(0.0f, halfWidth, 1.0f) *
+      osg::Vec3(halfWidth, 0.0f, 1.0f) *
       modelMatrix; // TODO: Change 1.0f customizable
     vertices->dirty();
 
