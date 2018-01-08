@@ -2,6 +2,7 @@
 
 #include <osg/MatrixTransform>
 #include <osg/Vec3>
+#include <osg/Group>
 
 struct Inputs
 {

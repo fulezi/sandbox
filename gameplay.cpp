@@ -2,6 +2,7 @@
 
 #include <osg/io_utils>
 
+#include "SceneManager.h"
 #include "gameplay.h"
 
 #include <cassert>
@@ -24,6 +25,9 @@ struct Movement
 
   void update(const float deltaTime);
   Movement(osg::MatrixTransform* target);
+
+  // TODO: Temp:
+  osg::ref_ptr<osg::Node> node;
 };
 
 Movement::Movement(osg::MatrixTransform* target)
@@ -51,13 +55,14 @@ Movement::update(const float deltaTime)
   point += velocity * deltaTime;
 
   // TODO: restore point on collision
-  
+  if (SceneManager::IsColliding(node)) {
+    point = previousTemp; // TODO: Z velocity
+  }
+
   if (point.z() < 0.0f) {
     point.z() = 0.0f;
   }
 
-  
-  
   auto m = target->getMatrix();
   m.setTrans(point);
   target->setMatrix(m);
@@ -75,6 +80,7 @@ initGame(osg::ref_ptr<osg::MatrixTransform> playerNode)
          "We assume player to be the first (0th) entry");
   movements.push_back(Movement(playerNode));
   movements[0].point = playerNode->getMatrix().getTrans();
+  movements[0].node  = playerNode;
 }
 
 void

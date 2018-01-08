@@ -1,0 +1,122 @@
+#Ascii Scene 
+#Version 100 
+#Generator OpenSceneGraph 3.2.3 
+
+osg::Group {
+  UniqueID 1 
+  Name "obstacle_CubePlayer.obj" 
+  Children 1 {
+    osg::Geode {
+      UniqueID 2 
+      Name "Obstacle" 
+      Drawables 1 {
+        osg::Geometry {
+          UniqueID 3
+	  Name "GeometryObstacle"
+          DataVariance STATIC 
+          StateSet TRUE {
+            osg::StateSet {
+              UniqueID 4 
+              DataVariance STATIC 
+              AttributeList 1 {
+                osg::Material {
+                  UniqueID 5 
+                  Name "Material" 
+                  Ambient TRUE Front 1 1 1 1 Back 1 1 1 1 
+                  Diffuse TRUE Front 0.8 0 0.001598 1 Back 0.8 0 0.001598 1 
+                  Specular TRUE Front 0.5 0.5 0.5 1 Back 0.5 0.5 0.5 1 
+                  Emission TRUE Front 0 0 0 1 Back 0 0 0 1 
+                  Shininess TRUE Front 12.288 Back 12.288 
+                }
+                Value OFF 
+              }
+            }
+          }
+          PrimitiveSetList 6 {
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              1 2 0 3 
+            }
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              7 4 6 5 
+            }
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              23 20 22 21 
+            }
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              19 16 18 17 
+            }
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              13 14 12 15 
+            }
+            DrawElementsUShort GL_TRIANGLE_STRIP 0 4 {
+              9 10 8 11 
+            }
+            
+          }
+          VertexData {
+            Array TRUE ArrayID 1 Vec3fArray 24 {
+              1 1 0.019836 
+              1 -1 0.019836 
+              -1 -1 0.019836 
+              -1 1 0.019836 
+              1 0.999999 2.01984 
+              -1 1 2.01984 
+              -1 -1 2.01984 
+              0.999999 -1 2.01984 
+              1 1 0.019836 
+              1 0.999999 2.01984 
+              0.999999 -1 2.01984 
+              1 -1 0.019836 
+              1 -1 0.019836 
+              0.999999 -1 2.01984 
+              -1 -1 2.01984 
+              -1 -1 0.019836 
+              -1 -1 0.019836 
+              -1 -1 2.01984 
+              -1 1 2.01984 
+              -1 1 0.019836 
+              1 0.999999 2.01984 
+              1 1 0.019836 
+              -1 1 0.019836 
+              -1 1 2.01984 
+            }
+            Indices FALSE 
+            Binding BIND_PER_VERTEX 
+            Normalize 0 
+          }
+          NormalData {
+            Array TRUE ArrayID 2 Vec3fArray 24 {
+              0 0 -1 
+              0 0 -1 
+              0 0 -1 
+              0 0 -1 
+              0 -0 1 
+              0 -0 1 
+              0 -0 1 
+              0 -0 1 
+              1 -0 0 
+              1 -0 0 
+              1 -0 0 
+              1 -0 0 
+              -0 -1 -0 
+              -0 -1 -0 
+              -0 -1 -0 
+              -0 -1 -0 
+              -1 0 -0 
+              -1 0 -0 
+              -1 0 -0 
+              -1 0 -0 
+              0 1 0 
+              0 1 0 
+              0 1 0 
+              0 1 0 
+            }
+            Indices FALSE 
+            Binding BIND_PER_VERTEX 
+            Normalize 0 
+          }
+        }
+      }
+    }
+  }
+}

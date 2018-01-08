@@ -47,6 +47,7 @@
 
 #include "Logger.h"
 #include "Ribbon.h"
+#include "SceneManager.h"
 #include "SkyBox.h"
 #include "Utils.h"
 #include "easing.h"
@@ -246,6 +247,7 @@ main(int /*argc*/, char* const /*argv*/[])
 
   unsigned int rcvShadowMask  = 0x1;
   unsigned int castShadowMask = 0x2;
+  unsigned int collisionMask = 0x4;
 
   osg::ref_ptr<osg::LightSource> source = new osg::LightSource;
   // source->getLight()->setPosition(osg::Vec4(-4.0, -4.0, 15.0, 0.0));
@@ -286,9 +288,12 @@ main(int /*argc*/, char* const /*argv*/[])
   assert(skycube);
   osg::ref_ptr<SkyBox> skybox = new SkyBox;
   skybox->addChild(skycube);
+  skybox->setName("Skybox");
+  skycube->setName("SkyCube");
   osg::ref_ptr<osg::Node> floor =
     osgDB::readNodeFile("../media/PlaneFloor.osgt");
   floor->setNodeMask(rcvShadowMask);
+  floor->setName("Floor");
   shadowroot->addChild(floor);
   root->addChild(skybox);
 
@@ -296,6 +301,8 @@ main(int /*argc*/, char* const /*argv*/[])
     osgDB::readNodeFile("../media/CubePlayer.osgt");
   osg::ref_ptr<osg::MatrixTransform> player = new osg::MatrixTransform;
   player->addChild(playerNode);
+  player->setName("Player");
+  playerNode->setName("PlayerNode");
   player->setNodeMask(rcvShadowMask | castShadowMask);
   shadowroot->addChild(player);
   osg::ref_ptr<FollowNodeCamera> cameraman =
@@ -319,16 +326,20 @@ main(int /*argc*/, char* const /*argv*/[])
   // root->addChild(sm->makeDebugHUD());
 
   // Obstacle:
+  osg::ref_ptr<osg::Node> ObstacleNode =
+    osgDB::readNodeFile("../media/Obstacle.osgt");
   osg::ref_ptr<osg::Group> obstacles = new osg::Group;
-  for (int i = 0; i < 75; ++i) {
+  for (int i = 0; i < 1; ++i) {
     osg::ref_ptr<osg::MatrixTransform> t = new osg::MatrixTransform;
     t->setMatrix(osg::Matrix::translate(
       Random(-30.0f, 20.0f), Random(10.0f, 30.0f) * 2.0f * (float)i, 0.0f));
-    t->addChild(playerNode);
+    t->addChild(ObstacleNode);
     t->setNodeMask(rcvShadowMask | castShadowMask);
-
+    t->setName("Obstacle");
+    
     obstacles->addChild(t);
   }
+  obstacles->setName("Obstacle Group");
   obstacles->setNodeMask(rcvShadowMask | castShadowMask);
 #if 0
   // TODO: Shadow should be baked at this point. In addition, the sadow map is
@@ -347,6 +358,7 @@ main(int /*argc*/, char* const /*argv*/[])
   root->addChild(shadowroot);
   viewer.setSceneData(root);
 
+  SceneManager::Init(obstacles);
   initGame(player);
 
   return viewer.run();

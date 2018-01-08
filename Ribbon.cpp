@@ -21,6 +21,8 @@ namespace Soleil {
     , colors(new osg::Vec4Array(osg::Array::Binding::BIND_PER_VERTEX,
                                 numberOfPoints))
   {
+    setName("Ribbon");
+    
     const osg::Vec3 origin(0.0f, 0.0f, 0.0f);
     const osg::Vec3 normal(0.0f, 0.0f, 1.0f);
 

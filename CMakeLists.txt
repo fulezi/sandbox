@@ -20,6 +20,7 @@ add_executable(zinc-osg
   easing.c
   SkyBox.cpp
   Logger.cpp
+  SceneManager.cpp
 
   Ribbon.cpp
   gameplay.cpp)
