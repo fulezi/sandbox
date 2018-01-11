@@ -54,11 +54,6 @@ Movement::update(const float deltaTime)
   const osg::Vec3 previousTemp = point;
   point += velocity * deltaTime;
 
-  // TODO: restore point on collision
-  if (SceneManager::IsColliding(node)) {
-    point = previousTemp; // TODO: Z velocity
-  }
-
   if (point.z() < 0.0f) {
     point.z() = 0.0f;
   }
@@ -66,6 +61,15 @@ Movement::update(const float deltaTime)
   auto m = target->getMatrix();
   m.setTrans(point);
   target->setMatrix(m);
+
+  if (SceneManager::IsColliding(node)) {
+    point = previousTemp; // TODO: Z velocity
+
+    // TODO: Clean
+    auto m = target->getMatrix();
+    m.setTrans(point);
+    target->setMatrix(m);
+  }
 }
 /* --- Movement --- */
 
@@ -100,4 +104,7 @@ updateGameplay(const double delta, const Inputs& PlayerInputs)
   for (auto& mov : movements) {
     mov.update(delta);
   }
+
+  // TODO: A Visitor that create Debug Shape
+  SceneManager::DebugGenerateRigidBodiesShapes();
 }

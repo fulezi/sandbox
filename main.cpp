@@ -245,9 +245,10 @@ main(int /*argc*/, char* const /*argv*/[])
   // Setting the Scene //
   ///////////////////////
 
-  unsigned int rcvShadowMask  = 0x1;
-  unsigned int castShadowMask = 0x2;
-  unsigned int collisionMask = 0x4;
+  unsigned int rcvShadowMask  = 1;
+  unsigned int castShadowMask = 2;
+  unsigned int collisionMask  = 4;
+  unsigned int renderMask     = 16;
 
   osg::ref_ptr<osg::LightSource> source = new osg::LightSource;
   // source->getLight()->setPosition(osg::Vec4(-4.0, -4.0, 15.0, 0.0));
@@ -329,14 +330,14 @@ main(int /*argc*/, char* const /*argv*/[])
   osg::ref_ptr<osg::Node> ObstacleNode =
     osgDB::readNodeFile("../media/Obstacle.osgt");
   osg::ref_ptr<osg::Group> obstacles = new osg::Group;
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; i < 5; ++i) {
     osg::ref_ptr<osg::MatrixTransform> t = new osg::MatrixTransform;
     t->setMatrix(osg::Matrix::translate(
       Random(-30.0f, 20.0f), Random(10.0f, 30.0f) * 2.0f * (float)i, 0.0f));
     t->addChild(ObstacleNode);
     t->setNodeMask(rcvShadowMask | castShadowMask);
     t->setName("Obstacle");
-    
+
     obstacles->addChild(t);
   }
   obstacles->setName("Obstacle Group");
@@ -359,6 +360,19 @@ main(int /*argc*/, char* const /*argv*/[])
   viewer.setSceneData(root);
 
   SceneManager::Init(obstacles);
+  SceneManager::RegisterRigidBody(*player);
+  // Do render only debug:
+#if 0
+  {
+    for (unsigned int i = 0; i < root->getNumChildren(); ++i) {
+      root->getChild(i)->setNodeMask(root->getChild(i)->getNodeMask() &
+                                     ~renderMask);
+    }
+    viewer.getCamera()->setCullMask(renderMask);
+    
+  }
+#endif
+    root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
   initGame(player);
 
   return viewer.run();
