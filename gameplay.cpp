@@ -3,6 +3,7 @@
 #include <osg/io_utils>
 
 #include "SceneManager.h"
+#include "Utils.h"
 #include "gameplay.h"
 
 #include <cassert>
@@ -69,6 +70,10 @@ Movement::update(const float deltaTime)
     auto m = target->getMatrix();
     m.setTrans(point);
     target->setMatrix(m);
+
+    // test bounce
+    velocity.x() = -(velocity.x()) * 3.0f;
+    velocity.y() = -(velocity.y()) * 3.0f;
   }
 }
 /* --- Movement --- */

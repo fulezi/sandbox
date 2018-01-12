@@ -61,36 +61,6 @@ Inputs PlayerInputs;
 
 /* --- Singletons --- */
 
-/* --- Utils ---*/
-template <typename T>
-int
-Sign(T val)
-{
-  return (T(0) < val) - (val < T(0));
-}
-template <typename T, typename U>
-T
-mix(T x, T y, U a)
-{
-  return x * (1.0 - a) + y * a;
-}
-template <typename T>
-T
-Random(T maxValue)
-{
-  return static_cast<T>(rand()) / (static_cast<T>(RAND_MAX / maxValue));
-}
-template <typename T>
-T
-Random(T minValue, T maxValue)
-{
-  //
-  return static_cast<T>(rand() + minValue) /
-         (static_cast<T>(RAND_MAX / maxValue));
-}
-
-/* --- Utils ---*/
-
 /* --- FollowNodeCamera --- */
 class FollowNodeCamera : public osgGA::CameraManipulator
 {
@@ -361,7 +331,7 @@ main(int /*argc*/, char* const /*argv*/[])
 
   SceneManager::Init(obstacles);
   SceneManager::RegisterRigidBody(*player);
-  // Do render only debug:
+// Do render only debug:
 #if 0
   {
     for (unsigned int i = 0; i < root->getNumChildren(); ++i) {
@@ -369,10 +339,10 @@ main(int /*argc*/, char* const /*argv*/[])
                                      ~renderMask);
     }
     viewer.getCamera()->setCullMask(renderMask);
-    
+
+        root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
   }
 #endif
-    root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
   initGame(player);
 
   return viewer.run();

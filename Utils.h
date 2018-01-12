@@ -31,32 +31,64 @@
 
 namespace Soleil {
 
-struct NameVisitor : public osg::NodeVisitor {
-  std::string name;
-  osg::Node *found = nullptr;
+  struct NameVisitor : public osg::NodeVisitor
+  {
+    std::string name;
+    osg::Node*  found = nullptr;
 
-  NameVisitor(osg::NodeVisitor::TraversalMode mode) : osg::NodeVisitor(mode) {}
-
-  void apply(osg::Node &node) override {
-    std::cout << "==" << node.getName() << "\n";
-    if (node.getName() == name)
-      found = &node;
-    else {
-      traverse(node);
+    NameVisitor(osg::NodeVisitor::TraversalMode mode)
+      : osg::NodeVisitor(mode)
+    {
     }
-  }
-};
 
-osg::Node *GetNodeByName(osg::Node &root, const std::string &name) {
-  if (root.getName() == name)
-    return &root;
-  NameVisitor v(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN);
-  v.name = name;
+    void apply(osg::Node& node) override
+    {
+      std::cout << "==" << node.getName() << "\n";
+      if (node.getName() == name)
+        found = &node;
+      else {
+        traverse(node);
+      }
+    }
+  };
 
-  root.accept(v);
-  return v.found;
-}
+  // osg::Node* GetNodeByName(osg::Node& root, const std::string& name)
+  // {
+  //   if (root.getName() == name) return &root;
+  //   NameVisitor v(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN);
+  //   v.name = name;
+
+  //   root.accept(v);
+  //   return v.found;
+  // }
 
 } // Soleil
+
+template <typename T>
+int
+Sign(T val)
+{
+  return (T(0) < val) - (val < T(0));
+}
+template <typename T, typename U>
+T
+mix(T x, T y, U a)
+{
+  return x * (1.0 - a) + y * a;
+}
+template <typename T>
+T
+Random(T maxValue)
+{
+  return static_cast<T>(rand()) / (static_cast<T>(RAND_MAX / maxValue));
+}
+template <typename T>
+T
+Random(T minValue, T maxValue)
+{
+  //
+  return static_cast<T>(rand() + minValue) /
+         (static_cast<T>(RAND_MAX / maxValue));
+}
 
 #endif /* SOLEIL__UTILS_H_ */
