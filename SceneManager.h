@@ -24,7 +24,9 @@ public:
   static void Init(osg::ref_ptr<osg::Group> sceneRoot);
 
 public:
+  // Deprecated?
   static bool IsColliding(osg::Node* node);
+  static bool RayCollision(osg::Node& node, const osg::Vec3& direction, osg::Vec3* normal = nullptr);
   static void RegisterRigidBody(osg::Node& node);
 
 public:

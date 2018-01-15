@@ -70,12 +70,22 @@ Sign(T val)
 {
   return (T(0) < val) - (val < T(0));
 }
+
 template <typename T, typename U>
 T
 mix(T x, T y, U a)
 {
   return x * (1.0 - a) + y * a;
 }
+
+template <typename T>
+T
+reflect(T incidence, T normal)
+{
+  // TODO:  osg::componentMultiply
+  return incidence - normal * (normal * incidence) * 2.0f;
+}
+
 template <typename T>
 T
 Random(T maxValue)

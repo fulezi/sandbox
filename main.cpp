@@ -43,12 +43,15 @@
 #include <osgShadow/ViewDependentShadowTechnique>
 #include <osgViewer/Viewer>
 
+#include <osgViewer/ViewerEventHandlers>
+
 #include <osg/Timer>
 
 #include "Logger.h"
 #include "Ribbon.h"
 #include "SceneManager.h"
 #include "SkyBox.h"
+#include "Time.h"
 #include "Utils.h"
 #include "easing.h"
 #include "stringutils.h"
@@ -72,6 +75,8 @@ public:
   osg::Matrixd getInverseMatrix() const override;
   bool handle(const osgGA::GUIEventAdapter& event,
               osgGA::GUIActionAdapter&      action) override;
+
+  void updateCamera();
 
 public:
   void setByMatrix(const osg::Matrixd& matrix) override;
@@ -150,18 +155,6 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
 {
   using TYPE = osgGA::GUIEventAdapter::EventType;
 
-// -----------------------
-// Update view matrix ----
-#if 0
-  const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter                 = targetCenter;
-#else
-  const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
-#endif
-  const osg::Vec3 finalTranslation = targetCenter + offset;
-  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
-
   // TODO: delta
   viewMatrix = osg::Matrix::inverse(
     osg::Matrix::lookAt(currentPosition, currentCenter, osg::Vec3(0, 0, 1)));
@@ -179,6 +172,32 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
       break;
     default: return false;
   }
+}
+
+void
+FollowNodeCamera::updateCamera()
+{
+#define SMOOTH_CAM 1
+
+// -----------------------
+// Update view matrix ----
+#if SMOOTH_CAM
+  const osg::Vec3& targetCenter = target->getBound().center();
+  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
+#else
+  const osg::Vec3& targetCenter = target->getBound().center();
+  currentCenter                 = targetCenter;
+#endif
+
+#if SMOOTH_CAM
+  const osg::Vec3 finalTranslation = targetCenter + offset;
+  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
+#else
+  const osg::Vec3 finalTranslation = targetCenter + offset;
+  currentPosition                  = finalTranslation;
+#endif
+
+#undef SMOOTH_CAM
 }
 
 /* --- FollowNodeCamera --- */
@@ -200,6 +219,7 @@ UpdateGamePlay::operator()(osg::Node* /*node*/, osg::NodeVisitor* nv)
   const double newTime = nv->getFrameStamp()->getReferenceTime();
   const double delta   = nv->getFrameStamp()->getReferenceTime() - lastUpdate;
 
+  Soleil::Time::StartFrame(nv->getFrameStamp()->getReferenceTime());
   updateGameplay(delta, PlayerInputs);
 
   lastUpdate = newTime;
@@ -329,6 +349,12 @@ main(int /*argc*/, char* const /*argv*/[])
   root->addChild(shadowroot);
   viewer.setSceneData(root);
 
+  osg::ref_ptr<osgViewer::StatsHandler> stats = new osgViewer::StatsHandler;
+  stats->setKeyEventTogglesOnScreenStats(
+    osgGA::GUIEventAdapter::KeySymbol::KEY_F1);
+  stats->setKeyEventPrintsOutStats(osgGA::GUIEventAdapter::KeySymbol::KEY_F2);
+  viewer.addEventHandler(stats);
+
   SceneManager::Init(obstacles);
   SceneManager::RegisterRigidBody(*player);
 // Do render only debug:
@@ -340,10 +366,17 @@ main(int /*argc*/, char* const /*argv*/[])
     }
     viewer.getCamera()->setCullMask(renderMask);
 
-        root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
+    root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
   }
 #endif
   initGame(player);
 
-  return viewer.run();
+  // return viewer.run();
+  while (!viewer.done()) {
+    viewer.frame();
+
+    // Update the camera after all node where updated
+    cameraman->updateCamera();
+  }
+  return 0;
 }

@@ -21,6 +21,8 @@ add_executable(zinc-osg
   SkyBox.cpp
   Logger.cpp
   SceneManager.cpp
+  Time.cpp
+  MovementCallback.cpp
 
   Ribbon.cpp
   gameplay.cpp)

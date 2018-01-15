@@ -10,6 +10,9 @@
 #include <osg/Drawable>
 #include <osg/MatrixTransform>
 #include <osg/ShapeDrawable>
+#include <osgUtil/IntersectionVisitor>
+#include <osgUtil/LineSegmentIntersector>
+#include <osgUtil/RayIntersector>
 
 static std::unique_ptr<SceneManager> sceneManager;
 
@@ -99,6 +102,7 @@ public:
 public:
   osg::Node* collider;
   bool       collided;
+  osg::Vec3  normal;
   RigidBody  colliderBody;
 };
 
@@ -119,22 +123,17 @@ PruningBoxVisitor::PruningBoxVisitor(osg::Node* node)
 
   colliderBody = RigidBody{visitor.getBoundingBox(), node->getBound()};
 
-
   // TODO: Temporary use Key ID based system
   static RigidBody* r = nullptr;
 
-  if (r)
-    {
-      r->box = colliderBody.box;
-      r->sphere = colliderBody.sphere;
-    }
-  else
-    {
-      sceneManager->rigidBodies.push_back(colliderBody);
-      r = &(sceneManager->rigidBodies.back());
-    }
+  if (r) {
+    r->box    = colliderBody.box;
+    r->sphere = colliderBody.sphere;
+  } else {
+    sceneManager->rigidBodies.push_back(colliderBody);
+    r = &(sceneManager->rigidBodies.back());
+  }
 
-  
   SceneManager::DebugGenerateRigidBodiesShapes();
 }
 
@@ -159,33 +158,11 @@ PruningBoxVisitor::apply(osg::Node& node)
       collided = true;
     }
   } else {
-    // if (true) {
-    // const osg::Matrix worldSpace =
-    //   osg::computeLocalToWorld(this->getNodePath());
     const osg::Matrix worldSpace =
       osg::computeLocalToWorld(this->getNodePath());
     const osg::BoundingSphere& bounds = node.getBound();
     const osg::BoundingSphere  boundsWS(bounds.center() * worldSpace,
                                        bounds.radius());
-
-    // for (const auto p : this->getNodePath()) {
-    //   SOLEIL__LOGGER_DEBUG("> ", p->getName(), ": ", p->className());
-    // }
-
-    // SOLEIL__LOGGER_DEBUG(node.getName(), ": ", node.className(),
-    //                      "----------------");
-    // SOLEIL__LOGGER_DEBUG(worldSpace);
-    // SOLEIL__LOGGER_DEBUG("1=", worldSpace * osg::Vec4(bounds.center(),
-    // 1.0f));
-    // SOLEIL__LOGGER_DEBUG(
-    //   "2=", osg::Matrix::translate(10, 1, 1) * osg::Vec3(2.0f, 2.0f, 2.0f));
-    // SOLEIL__LOGGER_DEBUG("3=",
-    //                      osg::Matrix::translate(10, 1, 1) *
-    //                        osg::Vec4(2.0f, 2.0f, 2.0f, 1.0f));
-    // SOLEIL__LOGGER_DEBUG("3=",
-    //                      osg::Matrix::translate(10, 1, 1).preMult(
-    //                        osg::Vec4(2.0f, 2.0f, 2.0f, 1.0f)));
-    // SOLEIL__LOGGER_DEBUG("4=", bounds.center() * worldSpace);
 
     debug_bound = boundsWS;
     if (boundsWS.intersects(collider->getBound())) {
@@ -195,14 +172,7 @@ PruningBoxVisitor::apply(osg::Node& node)
 
   if (&node != collider && collided) {
     this->traverse(node);
-  } // else {
-  //   SOLEIL__LOGGER_DEBUG(
-  //     "NO collision between ", collider->getName(), " and ", node.getName(),
-  //     "(", node.className(), transformGroup, ")\t",
-  //     "NODE >>>Center:", debug_bound.center(), "Radius: ", debug_bound.radius(),
-  //     " - COLLIDER >>>Center:", collider->getBound().center(),
-  //     "Radius: ", collider->getBound().radius());
-  // }
+  }
 }
 
 void
@@ -230,22 +200,42 @@ PruningBoxVisitor::apply(osg::Drawable& node)
       " - COLLIDER >>>Center:", collider->getBound().center(),
       "Radius: ", collider->getBound().radius());
   }
-#else
+#elif 1
   const osg::Matrix worldSpace = osg::computeLocalToWorld(this->getNodePath());
   const osg::BoundingBox& bounds = node.getBoundingBox();
   osg::BoundingBox        boundsWS;
   boundsWS.expandBy(osg::Vec3(bounds.xMin(), bounds.yMin(), bounds.zMin()) *
-                 worldSpace);
+                    worldSpace);
   boundsWS.expandBy(osg::Vec3(bounds.xMax(), bounds.yMax(), bounds.zMax()) *
-                 worldSpace);
+                    worldSpace);
 
   const osg::BoundingBox debug_bound = boundsWS;
 
   if (boundsWS.intersects(colliderBody.box)) {
+
+    //     // TODO: resuse intersector
+    //     osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector =
+    //       new osgUtil::LineSegmentIntersector(boundsWS.center(),
+    //                                           colliderBody.box.center());
+    //     osgUtil::IntersectionVisitor visitor(intersector);
+    // #if 0
+    //     for (osg::Node* n : this->getNodePath()) {
+    //       visitor.pushOntoNodePath(n);
+    //     }
+    //     visitor.setTraversalMask(~0x1);
+    //     node.accept(visitor);
+    // #else
+    //     sceneManager->sceneRoot->accept(visitor);
+    // #endif
+    // if (intersector->containsIntersections()) {
     collided = true;
+    // normal   = intersector->getFirstIntersection().getLocalIntersectNormal();
+
     SOLEIL__LOGGER_DEBUG("COLLISION between ", collider->getName(), " and ",
                          node.getName());
+    // }
 
+    // TODO: Traverse really needed?
     this->traverse(node);
   } else {
     SOLEIL__LOGGER_DEBUG("NO collision between ", collider->getName(), " and ",
@@ -255,50 +245,52 @@ PruningBoxVisitor::apply(osg::Drawable& node)
                          " - COLLIDER >>>Center:", colliderBody.box.center(),
                          "Radius: ", colliderBody.box.radius());
   }
-
 #endif
+}
+
+bool
+SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
+                           osg::Vec3* normal)
+{
+  // osg::ref_ptr<osgUtil::RayIntersector> ray = new osgUtil::RayIntersector(
+  //   osgUtil::Intersector::CoordinateFrame::MODEL, node.getBound().center(),
+  //   direction, nullptr,
+  //   osgUtil::Intersector::IntersectionLimit::LIMIT_NEAREST);
+  // osg::ref_ptr<osgUtil::RayIntersector> ray =
+  //   new osgUtil::RayIntersector(node.getBound().center(), direction);
+  const osg::Vec3 end = node.getBound().center() * (osg::Matrix::translate(direction * 10));
+  osg::ref_ptr<osgUtil::LineSegmentIntersector> ray =
+    new osgUtil::LineSegmentIntersector(node.getBound().center(), end);
+  osgUtil::IntersectionVisitor visitor(ray);
+
+  sceneManager->sceneRoot->accept(visitor);
+
+  if (ray->containsIntersections()) {
+    if (ray->getFirstIntersection().nodePath.back()->getBound().intersects(
+          node.getBound())) {
+      if (normal) {
+        *normal = ray->getFirstIntersection().getLocalIntersectNormal();
+      }
+
+      SOLEIL__LOGGER_DEBUG("COLLISION between ", node.getName(), " and ",
+			   ray->getFirstIntersection().nodePath.back()->getName());
+
+      return true;
+    }
+    else
+      SOLEIL__LOGGER_DEBUG("NO collision between ", node.getName(), " and ",
+			   ray->getFirstIntersection().nodePath.back()->getName());
+  }
+  return false;
 }
 
 bool
 SceneManager::IsColliding(osg::Node* node)
 {
   PruningBoxVisitor visitor(node);
-
   sceneManager->sceneRoot->accept(visitor);
   return visitor.collided;
 }
-
-// Debug -----------------------------------------------
-
-// ComputeRigiBodyShapes ---------------------------
-// struct ComputeRigiBodyShapes : public osg::NodeVisitor
-// {
-// public:
-//   ComputeRigiBodyShapes();
-
-// public:
-//   void apply(osg::Drawable& node) override;
-
-// public:
-//   osg::ref_ptr<osg::Group> sceneRoot;
-// };
-
-// ComputeRigiBodyShapes::ComputeRigiBodyShapes()
-//   : osg::NodeVisitor(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN)
-//   , sceneRoot(sceneRoot)
-// {
-// }
-
-// void
-// ComputeRigiBodyShapes::apply(osg::Drawable& node)
-// {
-//   osg::ref_ptr<osg::Node> referenced = &node;
-//   if (sceneManager->rigidBodies.count(referenced) > 0) return;
-
-//   RigidBody body{node.getBoundingBox(), node.getBound()};
-//   sceneManager->rigidBodies[referenced] = body;
-// }
-// ComputeRigiBodyShapes ---------------------------
 
 osg::ref_ptr<osg::Group>
 SceneManager::DebugGenerateRigidBodiesShapes()
