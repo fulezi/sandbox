@@ -12,7 +12,7 @@
 #include <osg/ShapeDrawable>
 #include <osgUtil/IntersectionVisitor>
 #include <osgUtil/LineSegmentIntersector>
-#include <osgUtil/RayIntersector>
+//#include <osgUtil/RayIntersector>
 
 static std::unique_ptr<SceneManager> sceneManager;
 
@@ -258,6 +258,8 @@ SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
   //   osgUtil::Intersector::IntersectionLimit::LIMIT_NEAREST);
   // osg::ref_ptr<osgUtil::RayIntersector> ray =
   //   new osgUtil::RayIntersector(node.getBound().center(), direction);
+
+  #if 0
   const osg::Vec3 end = node.getBound().center() * (osg::Matrix::translate(direction * 10));
   osg::ref_ptr<osgUtil::LineSegmentIntersector> ray =
     new osgUtil::LineSegmentIntersector(node.getBound().center(), end);
@@ -281,6 +283,7 @@ SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
       SOLEIL__LOGGER_DEBUG("NO collision between ", node.getName(), " and ",
 			   ray->getFirstIntersection().nodePath.back()->getName());
   }
+  #endif
   return false;
 }
 

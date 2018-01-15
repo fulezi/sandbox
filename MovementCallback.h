@@ -11,7 +11,7 @@ namespace Soleil {
   {
     osg::Vec3 force;
     osg::Vec3 velocity;
-    osg::Vec3 friction;
+    float friction;
     float     mass;
 
     osg::Vec3 point;
@@ -19,7 +19,7 @@ namespace Soleil {
     Movement()
       : force(0.0f, 0.0f, -9.31f)
       , velocity(0.0f, 0.0f, 0.0f)
-      , friction(0.002f, 0.002f, 1.0f)
+      , friction(0.002f)
       , mass(1.0f)
       , point(0.0f, 0.0f, 0.0f)
     {

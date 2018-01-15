@@ -5,6 +5,8 @@
 #include <map>
 #include <osg/Group>
 #include <vector>
+#include <osg/BoundingBox>
+
 
 struct RigidBody
 {

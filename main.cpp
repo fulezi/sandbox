@@ -76,7 +76,7 @@ public:
   bool handle(const osgGA::GUIEventAdapter& event,
               osgGA::GUIActionAdapter&      action) override;
 
-  void updateCamera();
+  void MyupdateCamera();
 
 public:
   void setByMatrix(const osg::Matrixd& matrix) override;
@@ -99,7 +99,7 @@ protected:
 FollowNodeCamera::FollowNodeCamera(osg::Transform* target, osg::Vec3 offset)
   : target(target)
   , offset(offset)
-  , smoothSpeed(0.1f)
+  , smoothSpeed(1.0f)
   , currentPosition(target->getBound().center() + offset)
   , currentCenter(target->getBound().center())
 {
@@ -155,10 +155,6 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
 {
   using TYPE = osgGA::GUIEventAdapter::EventType;
 
-  // TODO: delta
-  viewMatrix = osg::Matrix::inverse(
-    osg::Matrix::lookAt(currentPosition, currentCenter, osg::Vec3(0, 0, 1)));
-
   // ------------------
   // Update inputs ----
   switch (event.getEventType()) {
@@ -175,7 +171,7 @@ FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
 }
 
 void
-FollowNodeCamera::updateCamera()
+FollowNodeCamera::MyupdateCamera()
 {
 #define SMOOTH_CAM 1
 
@@ -183,7 +179,8 @@ FollowNodeCamera::updateCamera()
 // Update view matrix ----
 #if SMOOTH_CAM
   const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
+  currentCenter =
+    mix(currentCenter, targetCenter, smoothSpeed);
 #else
   const osg::Vec3& targetCenter = target->getBound().center();
   currentCenter                 = targetCenter;
@@ -191,11 +188,15 @@ FollowNodeCamera::updateCamera()
 
 #if SMOOTH_CAM
   const osg::Vec3 finalTranslation = targetCenter + offset;
-  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
+  currentPosition                  = mix(currentPosition, finalTranslation,
+                        smoothSpeed);
 #else
   const osg::Vec3 finalTranslation = targetCenter + offset;
   currentPosition                  = finalTranslation;
 #endif
+
+  viewMatrix = osg::Matrix::inverse(osg::Matrix::lookAt(
+    currentPosition, currentCenter, osg::Vec3(0.0f, 0.0f, 1.0f)));
 
 #undef SMOOTH_CAM
 }
@@ -371,12 +372,21 @@ main(int /*argc*/, char* const /*argv*/[])
 #endif
   initGame(player);
 
+  osgViewer::ViewerBase::ThreadingModel th =
+    osgViewer::ViewerBase::SingleThreaded;
+  viewer.setThreadingModel(th);
+  viewer.setRunMaxFrameRate(30);
+
   // return viewer.run();
-  while (!viewer.done()) {
+  cameraman->MyupdateCamera();
+  while (!viewer.done()) {    
     viewer.frame();
 
     // Update the camera after all node where updated
-    cameraman->updateCamera();
+    cameraman->MyupdateCamera();
+
+    // std::string txt;
+    // std::cin >> txt;
   }
   return 0;
 }

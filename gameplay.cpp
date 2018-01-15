@@ -102,7 +102,9 @@ initGame(osg::ref_ptr<osg::MatrixTransform> playerNode)
 
   osg::ref_ptr<Soleil::MovementCallback> mov = new Soleil::MovementCallback;
   playerNode->addUpdateCallback(mov);
+  playerNode->setDataVariance(osg::Object::DYNAMIC);
   movement = &(mov->movement);
+  movement->mass = 1;
 }
 
 void
@@ -116,7 +118,7 @@ updateGameplay(const double delta, const Inputs& PlayerInputs)
   movement->force.x() = PlayerInputs.dpad.x() * playerSpeed;
   movement->force.y() = PlayerInputs.dpad.y() * playerSpeed;
   if (PlayerInputs.jump && playerPosition.z() <= 0.0f) {
-    movement->velocity.z() = 100.0f;
+    movement->velocity.z() = 100.0f / movement->mass;
   }
 
   // for (auto& mov : movements) {
