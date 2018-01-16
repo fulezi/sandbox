@@ -32,21 +32,14 @@ namespace Soleil {
 
     assert(data->asNodeVisitor());
 
-    osg::Matrix worldSpace =
-      osg::computeLocalToWorld(data->asNodeVisitor()->getNodePath());
-
     const osg::Vec3 direction = normalize(movement.velocity);
 
     osg::Vec3 normal;
-    if (SceneManager::RayCollision(worldSpace, *object->asNode(), direction,
-                                   &normal)) {
+    if (SceneManager::RayCollision(*object->asNode(), direction, &normal)) {
       target->setMatrix(copie);
-      // movement.velocity.x() = -(movement.velocity.x()) * 3.0f;
-      // movement.velocity.y() = -(movement.velocity.y()) * 3.0f;
 
-      // movement.force.x() = 0.0f;
-      // movement.force.y() = 0.0f;
-      movement.velocity = reflect(direction, normal) * 100.0f;
+      movement.velocity =
+        reflect(direction, normal) * 100.0f; // TODO: Dependent on the velocity
     }
 
     return traverse(object, data);

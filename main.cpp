@@ -355,7 +355,6 @@ main(int /*argc*/, char* const /*argv*/[])
   viewer.addEventHandler(stats);
 
   SceneManager::Init(obstacles);
-  SceneManager::RegisterRigidBody(*player);
 // Do render only debug:
 #if 0
   {
