@@ -179,8 +179,7 @@ FollowNodeCamera::MyupdateCamera()
 // Update view matrix ----
 #if SMOOTH_CAM
   const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter =
-    mix(currentCenter, targetCenter, smoothSpeed);
+  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
 #else
   const osg::Vec3& targetCenter = target->getBound().center();
   currentCenter                 = targetCenter;
@@ -188,8 +187,7 @@ FollowNodeCamera::MyupdateCamera()
 
 #if SMOOTH_CAM
   const osg::Vec3 finalTranslation = targetCenter + offset;
-  currentPosition                  = mix(currentPosition, finalTranslation,
-                        smoothSpeed);
+  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
 #else
   const osg::Vec3 finalTranslation = targetCenter + offset;
   currentPosition                  = finalTranslation;
@@ -379,7 +377,7 @@ main(int /*argc*/, char* const /*argv*/[])
 
   // return viewer.run();
   cameraman->MyupdateCamera();
-  while (!viewer.done()) {    
+  while (!viewer.done()) {
     viewer.frame();
 
     // Update the camera after all node where updated

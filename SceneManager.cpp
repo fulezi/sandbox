@@ -12,6 +12,7 @@
 #include <osg/ShapeDrawable>
 #include <osgUtil/IntersectionVisitor>
 #include <osgUtil/LineSegmentIntersector>
+#include <osgUtil/RayIntersector>
 //#include <osgUtil/RayIntersector>
 
 static std::unique_ptr<SceneManager> sceneManager;
@@ -252,14 +253,14 @@ bool
 SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
                            osg::Vec3* normal)
 {
-  // osg::ref_ptr<osgUtil::RayIntersector> ray = new osgUtil::RayIntersector(
-  //   osgUtil::Intersector::CoordinateFrame::MODEL, node.getBound().center(),
-  //   direction, nullptr,
-  //   osgUtil::Intersector::IntersectionLimit::LIMIT_NEAREST);
-  // osg::ref_ptr<osgUtil::RayIntersector> ray =
-  //   new osgUtil::RayIntersector(node.getBound().center(), direction);
+// osg::ref_ptr<osgUtil::RayIntersector> ray = new osgUtil::RayIntersector(
+//   osgUtil::Intersector::CoordinateFrame::MODEL, node.getBound().center(),
+//   direction, nullptr,
+//   osgUtil::Intersector::IntersectionLimit::LIMIT_NEAREST);
+// osg::ref_ptr<osgUtil::RayIntersector> ray =
+//   new osgUtil::RayIntersector(node.getBound().center(), direction);
 
-  #if 0
+#if 0
   const osg::Vec3 end = node.getBound().center() * (osg::Matrix::translate(direction * 10));
   osg::ref_ptr<osgUtil::LineSegmentIntersector> ray =
     new osgUtil::LineSegmentIntersector(node.getBound().center(), end);
@@ -283,7 +284,40 @@ SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
       SOLEIL__LOGGER_DEBUG("NO collision between ", node.getName(), " and ",
 			   ray->getFirstIntersection().nodePath.back()->getName());
   }
-  #endif
+#endif
+  return false;
+}
+
+bool
+SceneManager::RayCollision(const osg::Matrix& modelSpace, osg::Node& node,
+                           const osg::Vec3& direction, osg::Vec3* normal)
+{
+  osg::ref_ptr<osgUtil::RayIntersector> ray = new osgUtil::RayIntersector(
+    osgUtil::Intersector::CoordinateFrame::MODEL, node.getBound().center(),
+    direction, nullptr, osgUtil::Intersector::IntersectionLimit::LIMIT_NEAREST);
+  // osg::ref_ptr<osgUtil::RayIntersector> ray =
+  //   new osgUtil::RayIntersector(node.getBound().center(), direction);
+  osgUtil::IntersectionVisitor visitor(ray);
+
+  sceneManager->sceneRoot->accept(visitor);
+
+  if (ray->containsIntersections()) {
+    if (node.getBound().contains(
+          ray->getFirstIntersection().getWorldIntersectPoint())) {
+      if (normal) {
+        *normal = ray->getFirstIntersection().getLocalIntersectNormal();
+      }
+
+      SOLEIL__LOGGER_DEBUG(
+        "COLLISION between ", node.getName(), " and ",
+        ray->getFirstIntersection().nodePath.back()->getName());
+
+      return true;
+    } else
+      SOLEIL__LOGGER_DEBUG(
+        "NO collision between ", node.getName(), " and ",
+        ray->getFirstIntersection().nodePath.back()->getName());
+  }
   return false;
 }
 

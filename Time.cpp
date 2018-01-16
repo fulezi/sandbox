@@ -21,8 +21,8 @@ namespace Soleil {
   void Time::StartFrame(const float time) noexcept { globalTime.startFrame(time); }
 
   float Time::DeltaTime(void) noexcept {
-    //return globalTime.deltaTime;
-    return 0.016f;
+    return globalTime.deltaTime;
+    //return 0.016f;
   }
 
 } // Soleil

@@ -2,7 +2,9 @@
 #include "MovementCallback.h"
 
 #include "Logger.h"
+#include "SceneManager.h"
 #include "Time.h"
+#include "Utils.h"
 
 #include <cassert>
 #include <osg/MatrixTransform>
@@ -11,28 +13,6 @@
 #include <iostream>
 
 namespace Soleil {
-
-  class Timer
-  {
-  public:
-    Timer()
-      : beg_(clock_::now())
-    {
-    }
-    void   reset() { beg_ = clock_::now(); }
-    double elapsed()
-    {
-      auto a =
-        std::chrono::duration_cast<second_>(clock_::now() - beg_).count();
-      reset();
-      return a;
-    }
-
-  private:
-    typedef std::chrono::high_resolution_clock clock_;
-    typedef std::chrono::duration<double, std::ratio<1>> second_;
-    std::chrono::time_point<clock_> beg_;
-  };
 
   bool MovementCallback::run(osg::Object* object, osg::Object* data)
   {
@@ -45,9 +25,29 @@ namespace Soleil {
       object->asNode()->asTransform()->asMatrixTransform();
 
     update();
-    auto m = target->getMatrix();
+    osg::Matrix m     = target->getMatrix();
+    osg::Matrix copie = m;
     m.setTrans(movement.point);
     target->setMatrix(m);
+
+    assert(data->asNodeVisitor());
+
+    osg::Matrix worldSpace =
+      osg::computeLocalToWorld(data->asNodeVisitor()->getNodePath());
+
+    const osg::Vec3 direction = normalize(movement.velocity);
+
+    osg::Vec3 normal;
+    if (SceneManager::RayCollision(worldSpace, *object->asNode(), direction,
+                                   &normal)) {
+      target->setMatrix(copie);
+      // movement.velocity.x() = -(movement.velocity.x()) * 3.0f;
+      // movement.velocity.y() = -(movement.velocity.y()) * 3.0f;
+
+      // movement.force.x() = 0.0f;
+      // movement.force.y() = 0.0f;
+      movement.velocity = reflect(direction, normal) * 100.0f;
+    }
 
     return traverse(object, data);
   }
@@ -60,19 +60,19 @@ namespace Soleil {
 
     movement.velocity += acceleration;
 
-    movement.velocity.x() = movement.velocity.x() *
-                            std::pow(movement.friction * movement.mass, deltaTime);
-    movement.velocity.y() = movement.velocity.y() *
-                            std::pow(movement.friction * movement.mass, deltaTime);
+    movement.velocity.x() =
+      movement.velocity.x() *
+      std::pow(movement.friction * movement.mass, deltaTime);
+    movement.velocity.y() =
+      movement.velocity.y() *
+      std::pow(movement.friction * movement.mass, deltaTime);
     // const osg::Vec3 previousTemp = movement.point;
-    movement.point += movement.velocity * deltaTime;
+    movement.point += movement.velocity * 0.016f;
 
     if (movement.point.z() < 0.0f) {
       movement.point.z()    = 0.0f;
       movement.velocity.z() = 0.0f;
     }
-
-    static Timer t;
 
     SOLEIL__LOGGER_DEBUG(movement.point);
   }

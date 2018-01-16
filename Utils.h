@@ -83,7 +83,9 @@ T
 reflect(T incidence, T normal)
 {
   // TODO:  osg::componentMultiply
-  return incidence - normal * (normal * incidence) * 2.0f;
+  return incidence -
+         osg::componentMultiply(
+           normal, (osg::componentMultiply(normal, incidence) * 2.0f));
 }
 
 template <typename T>
@@ -99,6 +101,14 @@ Random(T minValue, T maxValue)
   //
   return static_cast<T>(rand() + minValue) /
          (static_cast<T>(RAND_MAX / maxValue));
+}
+
+inline osg::Vec3
+normalize(const osg::Vec3& node)
+{
+  osg::Vec3 normalized = node;
+  normalized.normalize();
+  return normalized;
 }
 
 #endif /* SOLEIL__UTILS_H_ */
