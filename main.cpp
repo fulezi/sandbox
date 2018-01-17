@@ -36,6 +36,7 @@
 #include <osgGA/CameraManipulator>
 #include <osgGA/NodeTrackerManipulator>
 #include <osgShadow/LightSpacePerspectiveShadowMap>
+#include <osgShadow/ParallelSplitShadowMap>
 #include <osgShadow/ShadowMap>
 #include <osgShadow/ShadowedScene>
 #include <osgShadow/SoftShadowMap>
@@ -57,6 +58,9 @@
 #include "stringutils.h"
 
 #include "gameplay.h"
+
+#define ZINC__SHADOWMAP 1
+#define ZINC_LEVEL_SHADOW_BAKED 1
 
 /* --- Singletons --- */
 
@@ -248,21 +252,17 @@ main(int /*argc*/, char* const /*argv*/[])
   source->getLight()->setLightNum(0);
   source->setName("SUN");
   source->setCullingActive(false);
-  //
+#if ZINC__SHADOWMAP == 1
   osg::ref_ptr<osgShadow::ShadowMap> sm = new osgShadow::ShadowMap;
-  // sm->setAmbientBias(osg::Vec2(0.9f, 0.9f));
-  // sm->setPolygonOffset(osg::Vec2(.20f, .20f));
-  // sm->setLight(source);
-  // sm->setTextureSize(osg::Vec2s(2048, 2048));
-  // sm->setTextureUnit(1);
-  //   osg::ref_ptr<osgShadow::SoftShadowMap> sm =
-  //     new osgShadow::SoftShadowMap;
-  // sm->setSoftnessWidth(.00000001f);
-  // osg::ref_ptr<osgShadow::ViewDependentShadowMap> sm =
-  //   new osgShadow::ViewDependentShadowMap;
-  // osg::ref_ptr<osgShadow::LightSpacePerspectiveShadowMapVB> sm =
-  //   new osgShadow::LightSpacePerspectiveShadowMapVB;
-  //
+#else
+  osg::ref_ptr<osgShadow::ViewDependentShadowMap> sm =
+    new osgShadow::ViewDependentShadowMap;
+// osg::ref_ptr<osgShadow::LightSpacePerspectiveShadowMapVB> sm =
+//   new osgShadow::LightSpacePerspectiveShadowMapVB;
+// osg::ref_ptr<osgShadow::ParallelSplitShadowMap> sm =
+//   new osgShadow::ParallelSplitShadowMap;
+#endif
+
   osg::ref_ptr<osgShadow::ShadowedScene> shadowroot =
     new osgShadow::ShadowedScene;
   shadowroot->setShadowTechnique(sm);
@@ -313,9 +313,10 @@ main(int /*argc*/, char* const /*argv*/[])
   // // TODO: on this node?
   player->addUpdateCallback(new Soleil::RibbonCallback(ribbon));
 
-  // root->addChild(sm->makeDebugHUD());
+// root->addChild(sm->makeDebugHUD());
 
-  // Obstacle:
+// Obstacle:
+#if 0
   osg::ref_ptr<osg::Node> ObstacleNode =
     osgDB::readNodeFile("../media/Obstacle.osgt");
   osg::ref_ptr<osg::Group> obstacles = new osg::Group;
@@ -329,15 +330,20 @@ main(int /*argc*/, char* const /*argv*/[])
 
     obstacles->addChild(t);
   }
+#elif 1
+  osg::ref_ptr<osg::Group> obstacles =
+    osgDB::readNodeFile("../media/level1.osgt")->asGroup();
+#endif
   obstacles->setName("Obstacle Group");
   obstacles->setNodeMask(rcvShadowMask | castShadowMask);
-#if 0
+
+#if ZINC_LEVEL_SHADOW_BAKED
+  root->addChild(obstacles);
+#else
   // TODO: Shadow should be baked at this point. In addition, the sadow map is
   // too small to include all the elements. It however render correctly with
   // ViewDependentshadowmap
   shadowroot->addChild(obstacles);
-#else
-  root->addChild(obstacles);
 #endif
 
   osgViewer::Viewer viewer;

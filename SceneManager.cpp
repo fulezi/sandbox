@@ -34,7 +34,12 @@ SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
 
   sceneManager->sceneRoot->accept(visitor);
 
+  // TODO: Do polytope fetch. Collision is taken from the center of mass wich
+  // allows wings to avoid colliding
+  
+
   if (ray->containsIntersections()) {
+    // TODO: Do polytope intersection
     if (node.getBound().contains(
           ray->getFirstIntersection().getWorldIntersectPoint())) {
       if (normal) {
@@ -46,10 +51,7 @@ SceneManager::RayCollision(osg::Node& node, const osg::Vec3& direction,
         ray->getFirstIntersection().nodePath.back()->getName());
 
       return true;
-    } else
-      SOLEIL__LOGGER_DEBUG(
-        "NO collision between ", node.getName(), " and ",
-        ray->getFirstIntersection().nodePath.back()->getName());
+    }
   }
   return false;
 }

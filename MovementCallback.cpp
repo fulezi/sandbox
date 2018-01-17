@@ -66,8 +66,6 @@ namespace Soleil {
       movement.point.z()    = 0.0f;
       movement.velocity.z() = 0.0f;
     }
-
-    SOLEIL__LOGGER_DEBUG(movement.point);
   }
 
 } // Soleil
