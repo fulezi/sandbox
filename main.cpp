@@ -34,7 +34,9 @@
 #include <osgDB/Registry>
 #include <osgDB/WriteFile>
 #include <osgGA/CameraManipulator>
+#include <osgGA/KeySwitchMatrixManipulator>
 #include <osgGA/NodeTrackerManipulator>
+#include <osgGA/TrackballManipulator>
 #include <osgShadow/LightSpacePerspectiveShadowMap>
 #include <osgShadow/ParallelSplitShadowMap>
 #include <osgShadow/ShadowMap>
@@ -43,7 +45,6 @@
 #include <osgShadow/ViewDependentShadowMap>
 #include <osgShadow/ViewDependentShadowTechnique>
 #include <osgViewer/Viewer>
-
 #include <osgViewer/ViewerEventHandlers>
 
 #include <osg/Timer>
@@ -61,12 +62,78 @@
 
 #define ZINC__SHADOWMAP 1
 #define ZINC_LEVEL_SHADOW_BAKED 1
+#define ZINC_DISPLAY_BOUNDINGBOX 1
 
 /* --- Singletons --- */
 
 Inputs PlayerInputs;
 
 /* --- Singletons --- */
+
+/* --- Displays boundingbox --- */
+#include <osg/PolygonMode>
+#include <osg/ShapeDrawable>
+class DisplayBoundingBoxVisitor : public osg::NodeVisitor
+{
+public:
+  osg::ref_ptr<osg::Geode> boxes;
+
+public:
+  DisplayBoundingBoxVisitor();
+
+public:
+  void apply(osg::Drawable& drawable) override;
+};
+
+DisplayBoundingBoxVisitor::DisplayBoundingBoxVisitor()
+  : NodeVisitor(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN)
+{
+  boxes = new osg::Geode;
+  boxes->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+  boxes->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  boxes->getOrCreateStateSet()->setRenderingHint(
+    osg::StateSet::TRANSPARENT_BIN);
+  boxes->setDataVariance(osg::Object::DataVariance::DYNAMIC);
+  boxes->getOrCreateStateSet()->setAttributeAndModes(new osg::PolygonMode(
+    osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE));
+}
+
+void
+DisplayBoundingBoxVisitor::apply(osg::Drawable& drawable)
+{
+  const osg::Matrix worldSpace = osg::computeLocalToWorld(this->getNodePath());
+  osg::BoundingBox  box        = drawable.computeBoundingBox();
+
+  osg::BoundingBox boxWS;
+  for (int i = 0; i < 7; ++i) {
+    boxWS.expandBy(box.corner(i) * worldSpace);
+  }
+
+  {
+    // osg::ref_ptr<osg::Box> shape = new osg::Box(boxWS.center(),
+    // boxWS.radius());
+    osg::ref_ptr<osg::Box> shape =
+      new osg::Box(box.center() * worldSpace, boxWS.xMax() - boxWS.xMin(),
+                   boxWS.yMax() - boxWS.yMin(), boxWS.zMax() - boxWS.zMin());
+    osg::ref_ptr<osg::ShapeDrawable> drawableBox =
+      new osg::ShapeDrawable(shape);
+    drawableBox->setColor(osg::Vec4(0.0f, 0.0f, 1.0f, 0.75f));
+    boxes->addDrawable(drawableBox);
+  }
+
+  // Sphere
+  {
+    osg::BoundingSphere       sphere(boxWS);
+    osg::ref_ptr<osg::Sphere> shape =
+      new osg::Sphere(sphere.center(), sphere.radius());
+    osg::ref_ptr<osg::ShapeDrawable> drawableBox =
+      new osg::ShapeDrawable(shape);
+    drawableBox->setColor(osg::Vec4(1.0f, 0.0f, 0.0f, 0.25f));
+    boxes->addChild(drawableBox);
+  }
+}
+
+/* --- Displays boundingbox --- */
 
 /* --- FollowNodeCamera --- */
 class FollowNodeCamera : public osgGA::CameraManipulator
@@ -124,13 +191,13 @@ FollowNodeCamera::getInverseMatrix() const
 void
 FollowNodeCamera::setByMatrix(const osg::Matrixd& /*matrix*/)
 {
-  assert(false && "// TODO: ");
+  // assert(false && "// TODO: ");
 }
 
 void
 FollowNodeCamera::setByInverseMatrix(const osg::Matrixd& /*matrix*/)
 {
-  assert(false && "// TODO: ");
+  // assert(false && "// TODO: ");
 }
 
 void
@@ -280,11 +347,6 @@ main(int /*argc*/, char* const /*argv*/[])
   skybox->addChild(skycube);
   skybox->setName("Skybox");
   skycube->setName("SkyCube");
-  osg::ref_ptr<osg::Node> floor =
-    osgDB::readNodeFile("../media/PlaneFloor.osgt");
-  floor->setNodeMask(rcvShadowMask);
-  floor->setName("Floor");
-  shadowroot->addChild(floor);
   root->addChild(skybox);
 
   osg::ref_ptr<osg::Node> playerNode =
@@ -317,6 +379,13 @@ main(int /*argc*/, char* const /*argv*/[])
 
 // Obstacle:
 #if 0
+  osg::ref_ptr<osg::Node> floor =
+    osgDB::readNodeFile("../media/PlaneFloor.osgt");
+  floor->setNodeMask(rcvShadowMask);
+  floor->setName("Floor");
+  shadowroot->addChild(floor);
+
+  
   osg::ref_ptr<osg::Node> ObstacleNode =
     osgDB::readNodeFile("../media/Obstacle.osgt");
   osg::ref_ptr<osg::Group> obstacles = new osg::Group;
@@ -332,6 +401,7 @@ main(int /*argc*/, char* const /*argv*/[])
   }
 #elif 1
   osg::ref_ptr<osg::Group> obstacles =
+    //osgDB::readNodeFile("../media/Rounded.osgt")->asGroup();
     osgDB::readNodeFile("../media/level1.osgt")->asGroup();
 #endif
   obstacles->setName("Obstacle Group");
@@ -348,7 +418,14 @@ main(int /*argc*/, char* const /*argv*/[])
 
   osgViewer::Viewer viewer;
   viewer.setLightingMode(osg::View::NO_LIGHT);
-  viewer.setCameraManipulator(cameraman);
+  osg::ref_ptr<osgGA::KeySwitchMatrixManipulator> ks =
+    new osgGA::KeySwitchMatrixManipulator;
+  ks->addMatrixManipulator(osgGA::GUIEventAdapter::KeySymbol::KEY_F11, "Race",
+                           cameraman);
+  ks->addMatrixManipulator(osgGA::GUIEventAdapter::KeySymbol::KEY_F12, "Free",
+                           new osgGA::TrackballManipulator);
+  viewer.setCameraManipulator(ks);
+  // viewer.setCameraManipulator(cameraman);
 
   // ribbon->setNodeMask(ribbon->getNodeMask() & ~rcvShadowMask);
   root->addChild(shadowroot);
@@ -378,9 +455,12 @@ main(int /*argc*/, char* const /*argv*/[])
   osgViewer::ViewerBase::ThreadingModel th =
     osgViewer::ViewerBase::SingleThreaded;
   viewer.setThreadingModel(th);
-  viewer.setRunMaxFrameRate(30);
+  viewer.setRunMaxFrameRate(60.0);
 
-  // return viewer.run();
+  osg::ref_ptr<DisplayBoundingBoxVisitor> displayBoundingbox =
+    new DisplayBoundingBoxVisitor;
+  root->addChild(displayBoundingbox->boxes);
+
   cameraman->MyupdateCamera();
   while (!viewer.done()) {
     viewer.frame();
@@ -388,8 +468,11 @@ main(int /*argc*/, char* const /*argv*/[])
     // Update the camera after all node where updated
     cameraman->MyupdateCamera();
 
-    // std::string txt;
-    // std::cin >> txt;
+#if ZINC_DISPLAY_BOUNDINGBOX
+    displayBoundingbox->boxes->removeChildren(
+      0, displayBoundingbox->boxes->getNumChildren());
+    obstacles->accept(*displayBoundingbox);
+#endif
   }
   return 0;
 }

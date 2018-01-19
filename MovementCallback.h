@@ -11,7 +11,7 @@ namespace Soleil {
   {
     osg::Vec3 force;
     osg::Vec3 velocity;
-    float friction;
+    float     friction;
     float     mass;
 
     osg::Vec3 point;
@@ -36,6 +36,7 @@ namespace Soleil {
 
   public:
     Movement movement;
+    float    distanceToObject; // Distance to the closest object
   };
 
 } // Soleil

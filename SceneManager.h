@@ -14,8 +14,10 @@ public:
   static void Init(osg::ref_ptr<osg::Group> sceneRoot);
 
 public:
-  static bool RayCollision(osg::Node& node, const osg::Vec3& direction,
-                           osg::Vec3* normal = nullptr);
+  static bool RayCollision(const osg::BoundingBox& box,
+                           const osg::Vec3&        direction,
+                           osg::Vec3*              normal           = nullptr,
+                           float*                  distanceToObject = nullptr);
 
 public:
   osg::ref_ptr<osg::Group> sceneRoot;
