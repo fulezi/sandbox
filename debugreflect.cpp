@@ -137,6 +137,8 @@ DisplayBoundingBoxVisitor::apply(osg::Drawable& drawable)
 
 /* --- Displays boundingbox --- */
 
+
+// NOTE: the project do not render as RELEASE mode
 int
 main(int /*argc*/, char* const /*argv*/[])
 {
@@ -252,11 +254,6 @@ main(int /*argc*/, char* const /*argv*/[])
   }
 #endif
 
-  osgViewer::ViewerBase::ThreadingModel th =
-    osgViewer::ViewerBase::SingleThreaded;
-  viewer.setThreadingModel(th);
-  viewer.setRunMaxFrameRate(60.0);
-
   osg::ref_ptr<DisplayBoundingBoxVisitor> displayBoundingbox =
     new DisplayBoundingBoxVisitor;
   root->addChild(displayBoundingbox->boxes);
@@ -274,7 +271,7 @@ main(int /*argc*/, char* const /*argv*/[])
   root->addChild(DirectionNode);
 
   osg::Vec3 collisionNormal;
-  float     collisionDistance;
+  float     collisionDistance; // = std::numeric_limits<float>::max()
   assert(SceneManager::SegmentCollision(directionStart, directionEnd,
                                         &collisionNormal, &collisionDistance));
 

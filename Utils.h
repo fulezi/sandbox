@@ -85,10 +85,6 @@ template <typename T>
 T
 reflect(T incidence, T normal)
 {
-  // TODO:  osg::componentMultiply
-  // return incidence -
-  //        osg::componentMultiply(
-  //          normal, (osg::componentMultiply(normal, incidence) * 2.0f));
   return normal * (-2.0f * (incidence * normal)) + incidence;
 }
 

@@ -27,32 +27,18 @@ namespace Soleil {
 
     const osg::Vec3 previousPoint = movement.point;
     update();
-    // osg::Matrix m     = target->getMatrix();
-    // osg::Matrix copie = m;
-    // m.setTrans(movement.point);
-    // target->setMatrix(m);
 
     assert(data->asNodeVisitor());
 
-    // SOLEIL__LOGGER_DEBUG(">>", movement.velocity);
     const osg::Vec3 direction = normalize(movement.velocity);
 
     osg::Vec3 normal;
     distanceToObject = 0.0f;
-
-    // TODO: Cache the bounding box calculation
+// TODO: Cache the bounding box calculation
+#if 0
     osg::ComputeBoundsVisitor v;
     object->asNode()->accept(v);
-    // osg::BoundingBox  box = v.getBoundingBox();
-    // osg::BoundingBox  boxWS;
-    // const osg::Matrix worldSpace =
-    //   osg::computeLocalToWorld(data->asNodeVisitor()->getNodePath());
-    // for (int i = 0; i < 7; ++i) {
-    //   boxWS.expandBy(box.corner(i) * worldSpace);
-    // }
-
-    // if (SceneManager::RayCollision(box, direction, &normal,
-    //                                &distanceToObject)) {
+#endif
 
     osg::Vec3 Direction =
       osg::Vec3(movement.velocity.x(), movement.velocity.y(), 0.0f) * 0.016f;
@@ -60,18 +46,11 @@ namespace Soleil {
 
     osg::Vec3 end =
       movement.point + Direction * object->asNode()->getBound().radius() * 1.5f;
-    // previousPoint +
-    // (osg::Vec3(movement.velocity.x(), movement.velocity.y(), 0.0f) * 0.016f *
-    //  object->asNode()->getBound().radius() *
-    //  10.0f); // object->asNode()->getBound().radius()
+
     if (SceneManager::SegmentCollision(previousPoint, end, &normal,
                                        &distanceToObject)) {
-      // target->setMatrix(copie);
-
       movement.velocity =
         reflect(direction, normal) * 100.0f; // TODO: Dependent on the velocity
-
-      // if (movement.velocity
 
       SOLEIL__LOGGER_DEBUG("REFLECTING: ", movement.velocity);
       movement.point = previousPoint;
@@ -96,7 +75,6 @@ namespace Soleil {
       std::pow(movement.friction * movement.mass, deltaTime);
     movement.velocity.y() *=
       std::pow(movement.friction * movement.mass, deltaTime);
-    // const osg::Vec3 previousTemp = movement.point;
     movement.point += movement.velocity * 0.016f;
 
     if (movement.point.z() < 0.0f) {
