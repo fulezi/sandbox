@@ -61,7 +61,7 @@
 #include "gameplay.h"
 
 #define ZINC__SHADOWMAP 0          // 1 To use shadowmap instead of VDSM
-#define ZINC_LEVEL_SHADOW_BAKED 1  // 1 To not add shadow to the loaded level
+#define ZINC_LEVEL_SHADOW_BAKED 0  // 1 To not add shadow to the loaded level
 #define ZINC_DISPLAY_BOUNDINGBOX 0 // 1 To display bounds
 #define ZINC_SINGLETHREAD 0
 #define ZINC_USETESTLEVEL 0

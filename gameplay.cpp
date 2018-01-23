@@ -31,7 +31,7 @@ initGame(osg::ref_ptr<osg::MatrixTransform> playerNode)
 void
 updateGameplay(const double delta, const Inputs& PlayerInputs)
 {
-  constexpr float playerSpeed = 3.0f;
+  constexpr float playerSpeed = 6.0f;
 
   const auto      playerMatrix   = player->getMatrix();
   const osg::Vec3 playerPosition = playerMatrix.getTrans();
