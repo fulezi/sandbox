@@ -18,6 +18,9 @@ public:
                            const osg::Vec3&        direction,
                            osg::Vec3*              normal           = nullptr,
                            float*                  distanceToObject = nullptr);
+  static bool SegmentCollision(const osg::Vec3& start, const osg::Vec3& end,
+                               osg::Vec3* normal           = nullptr,
+                               float*     distanceToObject = nullptr);
 
 public:
   osg::ref_ptr<osg::Group> sceneRoot;

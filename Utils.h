@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+#include "Logger.h"
+
 namespace Soleil {
 
   struct NameVisitor : public osg::NodeVisitor
@@ -43,7 +45,8 @@ namespace Soleil {
 
     void apply(osg::Node& node) override
     {
-      std::cout << "==" << node.getName() << "\n";
+      SOLEIL__LOGGER_DEBUG("Searching for '", name,
+                           "' in node: ", node.getName());
       if (node.getName() == name)
         found = &node;
       else {
@@ -52,15 +55,15 @@ namespace Soleil {
     }
   };
 
-  // osg::Node* GetNodeByName(osg::Node& root, const std::string& name)
-  // {
-  //   if (root.getName() == name) return &root;
-  //   NameVisitor v(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN);
-  //   v.name = name;
+  inline osg::Node* GetNodeByName(osg::Node& root, const std::string& name)
+  {
+    if (root.getName() == name) return &root;
+    NameVisitor v(osg::NodeVisitor::TraversalMode::TRAVERSE_ALL_CHILDREN);
+    v.name = name;
 
-  //   root.accept(v);
-  //   return v.found;
-  // }
+    root.accept(v);
+    return v.found;
+  }
 
 } // Soleil
 
@@ -83,9 +86,10 @@ T
 reflect(T incidence, T normal)
 {
   // TODO:  osg::componentMultiply
-  return incidence -
-         osg::componentMultiply(
-           normal, (osg::componentMultiply(normal, incidence) * 2.0f));
+  // return incidence -
+  //        osg::componentMultiply(
+  //          normal, (osg::componentMultiply(normal, incidence) * 2.0f));
+  return normal * (-2.0f * (incidence * normal)) + incidence;
 }
 
 template <typename T>

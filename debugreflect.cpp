@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright (C) 2017  Florian GOLESTIN
  *
@@ -61,10 +63,8 @@
 #include "gameplay.h"
 
 #define ZINC__SHADOWMAP 0          // 1 To use shadowmap instead of VDSM
-#define ZINC_LEVEL_SHADOW_BAKED 1  // 1 To not add shadow to the loaded level
+#define ZINC_LEVEL_SHADOW_BAKED 0  // 1 To not add shadow to the loaded level
 #define ZINC_DISPLAY_BOUNDINGBOX 0 // 1 To display bounds
-#define ZINC_SINGLETHREAD 0
-#define ZINC_USETESTLEVEL 0
 
 /* --- Singletons --- */
 
@@ -137,168 +137,6 @@ DisplayBoundingBoxVisitor::apply(osg::Drawable& drawable)
 
 /* --- Displays boundingbox --- */
 
-/* --- FollowNodeCamera --- */
-class FollowNodeCamera : public osgGA::CameraManipulator
-{
-public:
-  FollowNodeCamera(osg::Transform* target, osg::Vec3 offset);
-
-public:
-  osg::Matrixd getMatrix() const override;
-  osg::Matrixd getInverseMatrix() const override;
-  bool handle(const osgGA::GUIEventAdapter& event,
-              osgGA::GUIActionAdapter&      action) override;
-
-  void MyupdateCamera();
-
-public:
-  void setByMatrix(const osg::Matrixd& matrix) override;
-  void setByInverseMatrix(const osg::Matrixd& matrix) override;
-
-protected:
-  void updateKeyboard(const osgGA::GUIEventAdapter& event,
-                      osgGA::GUIActionAdapter&      action);
-
-protected:
-  osg::Transform* target;
-  osg::Vec3       offset;
-  float           smoothSpeed;
-
-  osg::Vec3   currentPosition;
-  osg::Vec3   currentCenter;
-  osg::Matrix viewMatrix;
-};
-
-FollowNodeCamera::FollowNodeCamera(osg::Transform* target, osg::Vec3 offset)
-  : target(target)
-  , offset(offset)
-  , smoothSpeed(1.0f)
-  , currentPosition(target->getBound().center() + offset)
-  , currentCenter(target->getBound().center())
-{
-}
-
-osg::Matrixd
-FollowNodeCamera::getMatrix() const
-{
-  return viewMatrix;
-}
-
-osg::Matrixd
-FollowNodeCamera::getInverseMatrix() const
-{
-  return osg::Matrix::inverse(getMatrix());
-}
-
-void
-FollowNodeCamera::setByMatrix(const osg::Matrixd& /*matrix*/)
-{
-  // assert(false && "// TODO: ");
-}
-
-void
-FollowNodeCamera::setByInverseMatrix(const osg::Matrixd& /*matrix*/)
-{
-  // assert(false && "// TODO: ");
-}
-
-void
-FollowNodeCamera::updateKeyboard(const osgGA::GUIEventAdapter& event,
-                                 osgGA::GUIActionAdapter& /*action*/)
-{
-  using KEY  = osgGA::GUIEventAdapter::KeySymbol;
-  using TYPE = osgGA::GUIEventAdapter::EventType;
-
-  const float movement = (event.getEventType() == TYPE::KEYDOWN) ? 1.0f : 0.0f;
-  switch (event.getKey()) {
-    case KEY::KEY_A: PlayerInputs.dpad.x() = -movement; break;
-    case KEY::KEY_D: PlayerInputs.dpad.x() = movement; break;
-    case KEY::KEY_W: PlayerInputs.dpad.y() = movement; break;
-    case KEY::KEY_S: PlayerInputs.dpad.y() = -movement; break;
-    case KEY::KEY_Space:
-      PlayerInputs.jump =
-        (event.getEventType() == TYPE::KEYDOWN) ? true : false;
-      break;
-  }
-}
-
-bool
-FollowNodeCamera::handle(const osgGA::GUIEventAdapter& event,
-                         osgGA::GUIActionAdapter&      action)
-{
-  using TYPE = osgGA::GUIEventAdapter::EventType;
-
-  // ------------------
-  // Update inputs ----
-  switch (event.getEventType()) {
-    case TYPE::KEYDOWN:
-      updateKeyboard(event, action);
-      return true;
-      break;
-    case TYPE::KEYUP:
-      updateKeyboard(event, action);
-      return true;
-      break;
-    default: return false;
-  }
-}
-
-void
-FollowNodeCamera::MyupdateCamera()
-{
-#define SMOOTH_CAM 1
-
-// -----------------------
-// Update view matrix ----
-#if SMOOTH_CAM
-  const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter                 = mix(currentCenter, targetCenter, smoothSpeed);
-#else
-  const osg::Vec3& targetCenter = target->getBound().center();
-  currentCenter                 = targetCenter;
-#endif
-
-#if SMOOTH_CAM
-  const osg::Vec3 finalTranslation = targetCenter + offset;
-  currentPosition = mix(currentPosition, finalTranslation, smoothSpeed);
-#else
-  const osg::Vec3 finalTranslation = targetCenter + offset;
-  currentPosition                  = finalTranslation;
-#endif
-
-  viewMatrix = osg::Matrix::inverse(osg::Matrix::lookAt(
-    currentPosition, currentCenter, osg::Vec3(0.0f, 0.0f, 1.0f)));
-
-#undef SMOOTH_CAM
-}
-
-/* --- FollowNodeCamera --- */
-
-/* --- Node Callback --- */
-
-class UpdateGamePlay : public osg::NodeCallback
-{
-public:
-  void operator()(osg::Node* node, osg::NodeVisitor* nv) override;
-
-private:
-  double lastUpdate;
-};
-
-void
-UpdateGamePlay::operator()(osg::Node* /*node*/, osg::NodeVisitor* nv)
-{
-  const double newTime = nv->getFrameStamp()->getReferenceTime();
-  const double delta   = nv->getFrameStamp()->getReferenceTime() - lastUpdate;
-
-  Soleil::Time::StartFrame(nv->getFrameStamp()->getReferenceTime());
-  updateGameplay(delta, PlayerInputs);
-
-  lastUpdate = newTime;
-}
-
-/* --- Node Callback --- */
-
 int
 main(int /*argc*/, char* const /*argv*/[])
 {
@@ -342,47 +180,9 @@ main(int /*argc*/, char* const /*argv*/[])
   //
 
   osg::ref_ptr<osg::Group> root = new osg::Group();
-  osg::ref_ptr<osg::Node>  skycube =
-    osgDB::readNodeFile("../media/ZincSkybox.osgt");
-  assert(skycube);
-  osg::ref_ptr<SkyBox> skybox = new SkyBox;
-  skybox->addChild(skycube);
-  skybox->setName("Skybox");
-  skycube->setName("SkyCube");
-  root->addChild(skybox);
-
-  osg::ref_ptr<osg::Node> playerNode =
-    osgDB::readNodeFile("../media/CubePlayer.osgt");
-  osg::ref_ptr<osg::MatrixTransform> player = new osg::MatrixTransform;
-  player->setMatrix(player->getMatrix() *
-                    osg::Matrix::scale(osg::Vec3(0.5f, 0.5f, 0.5f)));
-  player->addChild(playerNode);
-  player->setName("Player");
-  playerNode->setName("PlayerNode");
-  player->setNodeMask(rcvShadowMask | castShadowMask);
-  shadowroot->addChild(player);
-  osg::ref_ptr<FollowNodeCamera> cameraman =
-    new FollowNodeCamera(player, osg::Vec3(0, -35, 15));
-  root->addEventCallback(new UpdateGamePlay());
-
-  // Ribbon:
-  osg::ref_ptr<Soleil::Ribbon> ribbon =
-    new Soleil::Ribbon(100, 2.0f, osg::Vec3(1.0f, 0.0f, 1.0f));
-  osg::ref_ptr<osg::Geode> ribbons = new osg::Geode;
-  ribbons->addDrawable(ribbon);
-  ribbons->getOrCreateStateSet()->setMode(GL_LIGHTING,
-                                          osg::StateAttribute::OFF);
-  ribbons->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-  ribbons->getOrCreateStateSet()->setRenderingHint(
-    osg::StateSet::TRANSPARENT_BIN);
-  root->addChild(ribbons);
-  // // TODO: on this node?
-  player->addUpdateCallback(new Soleil::RibbonCallback(ribbon));
-
-// root->addChild(sm->makeDebugHUD());
 
 // Obstacle:
-#if ZINC_USETESTLEVEL
+#if 0
   osg::ref_ptr<osg::Node> floor =
     osgDB::readNodeFile("../media/PlaneFloor.osgt");
   floor->setNodeMask(rcvShadowMask);
@@ -424,12 +224,9 @@ main(int /*argc*/, char* const /*argv*/[])
   viewer.setLightingMode(osg::View::NO_LIGHT);
   osg::ref_ptr<osgGA::KeySwitchMatrixManipulator> ks =
     new osgGA::KeySwitchMatrixManipulator;
-  ks->addMatrixManipulator(osgGA::GUIEventAdapter::KeySymbol::KEY_F11, "Race",
-                           cameraman);
   ks->addMatrixManipulator(osgGA::GUIEventAdapter::KeySymbol::KEY_F12, "Free",
                            new osgGA::TrackballManipulator);
   viewer.setCameraManipulator(ks);
-  // viewer.setCameraManipulator(cameraman);
 
   // ribbon->setNodeMask(ribbon->getNodeMask() & ~rcvShadowMask);
   root->addChild(shadowroot);
@@ -454,25 +251,57 @@ main(int /*argc*/, char* const /*argv*/[])
     root->addChild(SceneManager::DebugGenerateRigidBodiesShapes());
   }
 #endif
-  initGame(player);
 
-#if ZINC_SINGLETHREAD
   osgViewer::ViewerBase::ThreadingModel th =
     osgViewer::ViewerBase::SingleThreaded;
   viewer.setThreadingModel(th);
   viewer.setRunMaxFrameRate(60.0);
-#endif
 
   osg::ref_ptr<DisplayBoundingBoxVisitor> displayBoundingbox =
     new DisplayBoundingBoxVisitor;
   root->addChild(displayBoundingbox->boxes);
 
-  cameraman->MyupdateCamera();
+  // Set Axis --------------------------------------------------------
+  osg::ref_ptr<osg::Node> taxis = osgDB::readNodeFile("../media/taxis.osgt");
+  // Set Direction ---------------------------------------------------
+  const osg::Vec3 directionStart(2.0f, 110.0f, 0.0f);
+  const osg::Vec3 directionEnd(directionStart.x() + 10.0f, directionStart.y(),
+                               directionStart.z());
+  osg::ref_ptr<osg::MatrixTransform> DirectionNode(new osg::MatrixTransform);
+  DirectionNode->addChild(Soleil::GetNodeByName(*taxis, "Direction"));
+  DirectionNode->setMatrix(osg::Matrix::rotate(-osg::PI_2f, 0, 0, 1) *
+                           osg::Matrix::translate(directionStart));
+  root->addChild(DirectionNode);
+
+  osg::Vec3 collisionNormal;
+  float     collisionDistance;
+  assert(SceneManager::SegmentCollision(directionStart, directionEnd,
+                                        &collisionNormal, &collisionDistance));
+
+  // Set Collision Normal ----------------------------------------------
+  osg::ref_ptr<osg::MatrixTransform> NormalNode(new osg::MatrixTransform);
+  NormalNode->addChild(Soleil::GetNodeByName(*taxis, "Normal"));
+  NormalNode->setMatrix(
+    osg::Matrix::rotate(osg::Vec3(0, 1, 0), collisionNormal) *
+    osg::Matrix::translate((osg::Vec3(0, 1, 0) * collisionDistance) *
+                           DirectionNode->getMatrix()));
+  root->addChild(NormalNode);
+
+  // Set Reflect --------------------------------------------------------
+  osg::Vec3 normalizedDirection = directionEnd - directionStart;
+  normalizedDirection.normalize();
+
+  osg::ref_ptr<osg::MatrixTransform> ReflectNode(new osg::MatrixTransform);
+  ReflectNode->addChild(Soleil::GetNodeByName(*taxis, "Reflect"));
+  ReflectNode->setMatrix(
+    osg::Matrix::rotate(osg::Vec3(0, 1, 0),
+                        reflect(normalizedDirection, collisionNormal)) *
+    osg::Matrix::translate((osg::Vec3(0, 1, 0) * collisionDistance) *
+                           DirectionNode->getMatrix()));
+  root->addChild(ReflectNode);
+
   while (!viewer.done()) {
     viewer.frame();
-
-    // Update the camera after all node where updated
-    cameraman->MyupdateCamera();
 
 #if ZINC_DISPLAY_BOUNDINGBOX
     displayBoundingbox->boxes->removeChildren(

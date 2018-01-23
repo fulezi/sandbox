@@ -32,3 +32,22 @@ target_link_libraries(zinc-osg
   ${OPENSCENEGRAPH_LIBRARIES}
   )
 
+
+
+add_executable(debug-reflect
+  debugreflect.cpp
+  easing.c
+  SkyBox.cpp
+  Logger.cpp
+  SceneManager.cpp
+  Time.cpp
+  MovementCallback.cpp
+
+  Ribbon.cpp
+  gameplay.cpp)
+
+
+target_link_libraries(debug-reflect
+  ${OPENSCENEGRAPH_LIBRARIES}
+  )
+
