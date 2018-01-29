@@ -13,6 +13,48 @@
 #include <chrono>
 #include <iostream>
 
+// TODO: Temp:
+#include <osgParticle/ModularEmitter>
+#include <osgParticle/ModularProgram>
+#include <osgParticle/ParticleSystem>
+#include <osgParticle/ParticleSystemUpdater>
+#include <osgParticle/RadialShooter>
+#include <osgParticle/SectorPlacer>
+static osg::ref_ptr<osgParticle::Emitter>
+CreateExplosionEmitter(const osg::Vec3& position)
+{
+  constexpr float scale = 1.0f;
+
+  osg::ref_ptr<osgParticle::RandomRateCounter> rrc =
+    new osgParticle::RandomRateCounter;
+  rrc->setRateRange(800, 1000);
+
+  osg::ref_ptr<osgParticle::ModularEmitter> emitter =
+    new osgParticle::ModularEmitter;
+  // emitter->setParticleSystem(ps);
+  emitter->setCounter(rrc);
+  emitter->setEndless(false);
+  emitter->setLifeTime(.10f);
+
+  osg::ref_ptr<osgParticle::RadialShooter> shooter =
+    new osgParticle::RadialShooter;
+  osg::ref_ptr<osgParticle::SectorPlacer> placer =
+    new osgParticle::SectorPlacer;
+
+  emitter->setPlacer(placer);
+  emitter->setShooter(shooter);
+
+  placer->setCenter(position);
+  placer->setRadiusRange(0.0f * scale, 0.25f * scale);
+
+  shooter->setThetaRange(0.0f, osg::PI * 2.0f);
+  shooter->setInitialSpeedRange(1.0f * scale, 10.0f * scale);
+
+  return emitter;
+}
+
+
+
 namespace Soleil {
 
   bool MovementCallback::run(osg::Object* object, osg::Object* data)
@@ -54,6 +96,10 @@ namespace Soleil {
 
       SOLEIL__LOGGER_DEBUG("REFLECTING: ", movement.velocity);
       movement.point = previousPoint;
+
+// TODO: Temp:
+      SceneManager::AddParticleEmitter(0, CreateExplosionEmitter(end));
+
     } else {
       osg::Matrix m = target->getMatrix();
       m.setTrans(movement.point);

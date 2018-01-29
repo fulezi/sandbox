@@ -37,6 +37,12 @@
 #include <osgGA/KeySwitchMatrixManipulator>
 #include <osgGA/NodeTrackerManipulator>
 #include <osgGA/TrackballManipulator>
+#include <osgParticle/ModularEmitter>
+#include <osgParticle/ModularProgram>
+#include <osgParticle/ParticleSystem>
+#include <osgParticle/ParticleSystemUpdater>
+#include <osgParticle/RadialShooter>
+#include <osgParticle/SectorPlacer>
 #include <osgShadow/LightSpacePerspectiveShadowMap>
 #include <osgShadow/ParallelSplitShadowMap>
 #include <osgShadow/ShadowMap>
@@ -136,6 +142,87 @@ DisplayBoundingBoxVisitor::apply(osg::Drawable& drawable)
 }
 
 /* --- Displays boundingbox --- */
+
+/* --- Explosion with particles --- */
+static osg::ref_ptr<osgParticle::ParticleSystem>
+CreateExplosionPS(osg::Group& parent)
+{
+  constexpr float                           scale = 1.0f;
+  osg::ref_ptr<osgParticle::ParticleSystem> ps =
+    new osgParticle::ParticleSystem;
+
+  ps->setDefaultAttributes("Images/smoke.rgb", false, false);
+
+  float radius  = 0.4f * scale;
+  float density = 1.2f; // 1.0kg/m^3
+
+  auto& defaultParticleTemplate = ps->getDefaultParticleTemplate();
+  defaultParticleTemplate.setLifeTime(1.0 + 0.1 * scale);
+  defaultParticleTemplate.setSizeRange(osgParticle::rangef(0.75f, 3.0f));
+  defaultParticleTemplate.setAlphaRange(osgParticle::rangef(0.1f, 1.0f));
+  defaultParticleTemplate.setColorRange(osgParticle::rangev4(
+    osg::Vec4(1.0f, 0.8f, 0.2f, 1.0f), osg::Vec4(1.0f, 0.4f, 0.1f, 0.0f)));
+  defaultParticleTemplate.setRadius(radius);
+  defaultParticleTemplate.setMass(density * radius * radius * radius * osg::PI *
+                                  4.0f / 3.0f);
+
+  // TODO: Try         _program = new osgParticle::FluidProgram;
+
+  osg::ref_ptr<osgParticle::ModularProgram> program =
+    new osgParticle::ModularProgram;
+  program->setParticleSystem(ps);
+
+  osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+  geode->addDrawable(ps);
+  parent.addChild(program);
+  parent.addChild(geode);
+
+  // parent->addChild(parent2);
+
+  osg::ref_ptr<osgParticle::ParticleSystemUpdater> updater =
+    new osgParticle::ParticleSystemUpdater;
+  updater->addParticleSystem(ps);
+  parent.addChild(updater);
+
+  // MeshSetLineMode(geometry);
+
+  return ps;
+}
+
+osg::ref_ptr<osgParticle::Emitter>
+CreateExplosionEmitter()
+{
+  constexpr float scale = 1.0f;
+
+  osg::ref_ptr<osgParticle::RandomRateCounter> rrc =
+    new osgParticle::RandomRateCounter;
+  rrc->setRateRange(800, 1000);
+
+  osg::ref_ptr<osgParticle::ModularEmitter> emitter =
+    new osgParticle::ModularEmitter;
+  // emitter->setParticleSystem(ps);
+  emitter->setCounter(rrc);
+  emitter->setEndless(false);
+  emitter->setLifeTime(.10f);
+
+  osg::ref_ptr<osgParticle::RadialShooter> shooter =
+    new osgParticle::RadialShooter;
+  osg::ref_ptr<osgParticle::SectorPlacer> placer =
+    new osgParticle::SectorPlacer;
+
+  emitter->setPlacer(placer);
+  emitter->setShooter(shooter);
+
+  // placer->setCenter(osg::Vec3(0, 0, 60));
+  placer->setRadiusRange(0.0f * scale, 0.25f * scale);
+
+  shooter->setThetaRange(0.0f, osg::PI * 2.0f);
+  shooter->setInitialSpeedRange(1.0f * scale, 10.0f * scale);
+
+  return emitter;
+}
+
+/* --- Explosion with particles --- */
 
 /* --- FollowNodeCamera --- */
 class FollowNodeCamera : public osgGA::CameraManipulator
@@ -389,7 +476,6 @@ main(int /*argc*/, char* const /*argv*/[])
   floor->setName("Floor");
   shadowroot->addChild(floor);
 
-  
   osg::ref_ptr<osg::Node> ObstacleNode =
     osgDB::readNodeFile("../media/Obstacle.osgt");
   osg::ref_ptr<osg::Group> obstacles = new osg::Group;
@@ -421,6 +507,10 @@ main(int /*argc*/, char* const /*argv*/[])
 #endif
 
   osgViewer::Viewer viewer;
+  // viewer.setUpViewOnSingleScreen(1);
+  // viewer.setUpViewerAsEmbeddedInWindow(0, 0, 1920, 1080);
+  // viewer.realize();
+
   viewer.setLightingMode(osg::View::NO_LIGHT);
   osg::ref_ptr<osgGA::KeySwitchMatrixManipulator> ks =
     new osgGA::KeySwitchMatrixManipulator;
@@ -466,6 +556,11 @@ main(int /*argc*/, char* const /*argv*/[])
   osg::ref_ptr<DisplayBoundingBoxVisitor> displayBoundingbox =
     new DisplayBoundingBoxVisitor;
   root->addChild(displayBoundingbox->boxes);
+
+  /* --- Explosion with particles --- */
+  osg::ref_ptr<osgParticle::ParticleSystem> ps = CreateExplosionPS(*root);
+  SceneManager::RegisterParticleSystem(0, ps);
+  SceneManager::AddParticleEmitter(0, CreateExplosionEmitter());
 
   cameraman->MyupdateCamera();
   while (!viewer.done()) {

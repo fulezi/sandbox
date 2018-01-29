@@ -75,4 +75,33 @@ SceneManager::SegmentCollision(const osg::Vec3& start, const osg::Vec3& end,
   return false;
 }
 
-// TODO: Idea -> Each frame compute all the bounding box in specific position
+void
+SceneManager::RegisterParticleSystem(
+  ObjectID id, osg::ref_ptr<osgParticle::ParticleSystem> system)
+{
+  assert(sceneManager && "Call SceneManager::Init method");
+
+  sceneManager->particleSystems.emplace(id, system);
+  sceneManager->sceneRoot->addChild(system);
+  // TODO: Only one ParticleSystemUpdater
+  // TODO: A specific group for particle systems
+}
+
+void
+SceneManager::AddParticleEmitter(ObjectID particleSystemID,
+                                 osg::ref_ptr<osgParticle::Emitter> emitter)
+{
+  assert(sceneManager && "Call SceneManager::Init method");
+
+  osg::ref_ptr<osgParticle::ParticleSystem> ps =
+    sceneManager->particleSystems[particleSystemID];
+  assert(ps && "No particle system found with this name");
+
+  emitter->setParticleSystem(ps);
+  sceneManager->sceneRoot->addChild(emitter);
+
+  // TODO: A specific group for emitter
+  // TODO: Remove all emitters that are finished (have a
+  // SceneManager::frameUpdate method)
+
+}

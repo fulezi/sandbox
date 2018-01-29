@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 # set(OSG_DIR /home/florian/jeux/OpenSceneGraph/build/INST)
-find_package(OpenSceneGraph REQUIRED osgDB osgUtil osgViewer osgGA osgShadow)
+find_package(OpenSceneGraph REQUIRED osgDB osgUtil osgViewer osgGA osgShadow osgParticle)
 
 
 
